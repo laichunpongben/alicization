@@ -1,7 +1,7 @@
 name,child,quantity
 miner,cosmic_resin,160
 miner,hyper_dust,70
-miner,nebular_gas_condensate,180
+miner,presolar_grain,180
 miner,nebulite,35
 miner,water_ice,55
 corvette,cosmic_ice,320
@@ -20,7 +20,7 @@ frigate,pulsar_residue,2000
 frigate,rare_earth_minerals,1500
 frigate,voidium,2200
 destroyer,cosmic_ice,50000
-destroyer,nebular_gas_condensate,80000
+destroyer,presolar_grain,80000
 destroyer,photon_dust,100000
 destroyer,quantum_foam,120000
 destroyer,solar_dust,150000

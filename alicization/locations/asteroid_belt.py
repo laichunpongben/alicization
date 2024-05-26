@@ -25,6 +25,7 @@ P_RESWAPN = 0.01
 P_CRASH_BASE = 0.005
 CRASH_MEAN_DAMAGE = 200
 BASE_MINE_AMOUNT = 100
+MAX_QTY = 1e12
 
 
 class AsteroidBelt(Location, Mineable):
@@ -55,7 +56,7 @@ class AsteroidBelt(Location, Mineable):
         for material in selected_materials:
             rarity = material.rarity
             mean = BASE_QTY * RARIRY_DECAY_QTY ** (rarity - 1)
-            resources[material.name] = np.random.poisson(mean)
+            resources[material.name] = min(np.random.poisson(mean), MAX_QTY)
 
         return resources
 
@@ -76,20 +77,17 @@ class AsteroidBelt(Location, Mineable):
         if not material:
             return 0
 
-        max_mined_amount = int(
-            max(
-                0,
-                (
-                    BASE_MINE_AMOUNT
-                    * player.spaceship.mining
-                    * (1 + player.spaceship.level / 10)
-                    * (1 + player.skills["mining"] * 0.001)
-                )
-                // material.rarity,
-            )
+        base_mined_amount = max(
+            BASE_MINE_AMOUNT
+            * player.spaceship.mining
+            * (1 + player.spaceship.level / 10)
+            * (1 + player.skills["mining"] * 0.001),
+            0,
         )
-        mined_amount = random.randint(0, max_mined_amount)
+        rarity_effect = 1 / (1 + np.log1p(material.rarity))
+        mined_amount = np.random.binomial(base_mined_amount / 10, rarity_effect) * 10
         mined_amount = min(mined_amount, self.resources[resource_to_mine])
+
         self.resources[resource_to_mine] -= mined_amount
         player.spaceship.cargo_hold[resource_to_mine] += mined_amount
 

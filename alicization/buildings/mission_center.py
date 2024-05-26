@@ -24,6 +24,7 @@ NUM_BOMBARD_ROUND = 10
 P_BOMBARD_HIT = 0.5
 DESTROY_SCORE = 1000
 BASE_MISSION_SCORE = 10
+MAX_DAMAGE = 1e12
 
 
 class Mission:
@@ -95,8 +96,9 @@ class MissionCenter(Building):
             player.turns_until_idle += mission.difficulty
             skill_level = player.skills["missioning"]
             if self.mission_success(mission.difficulty, skill_level):
-                damage = np.random.poisson(
-                    mission.difficulty * MISSION_SUCCESS_BASE_DAMAGE
+                damage = min(
+                    np.random.poisson(mission.difficulty * MISSION_SUCCESS_BASE_DAMAGE),
+                    MAX_DAMAGE,
                 )
                 player.spaceship.take_damage(damage)
                 if player.spaceship.destroyed:
@@ -124,8 +126,9 @@ class MissionCenter(Building):
                             f"{player.name} completed MISSION LV {mission.difficulty}"
                         )
             else:
-                damage = np.random.poisson(
-                    mission.difficulty * MISSION_FAIL_BASE_DAMAGE
+                damage = min(
+                    np.random.poisson(mission.difficulty * MISSION_FAIL_BASE_DAMAGE),
+                    MAX_DAMAGE,
                 )
                 player.spaceship.take_damage(damage)
                 if player.spaceship.destroyed:

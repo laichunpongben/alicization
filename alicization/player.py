@@ -583,6 +583,7 @@ class Player:
             if new_spaceship is not None:
                 for item, count in self.spaceship.cargo_hold.items():
                     new_spaceship.cargo_hold[item] += count
+                    self.spaceship.cargo_hold[item] = 0
 
                 if not isinstance(self.spaceship, Explorer):
                     self.hanger.append(self.spaceship)
@@ -611,6 +612,7 @@ class Player:
             if new_spaceship is not None:
                 for item, count in self.spaceship.cargo_hold.items():
                     new_spaceship.cargo_hold[item] += count
+                    self.spaceship.cargo_hold[item] = 0
 
                 if not isinstance(self.spaceship, Explorer):
                     self.hanger.append(self.spaceship)
@@ -639,6 +641,7 @@ class Player:
             if new_spaceship is not None:
                 for item, count in self.spaceship.cargo_hold.items():
                     new_spaceship.cargo_hold[item] += count
+                    self.spaceship.cargo_hold[item] = 0
 
                 if not isinstance(self.spaceship, Explorer):
                     self.hanger.append(self.spaceship)
@@ -667,6 +670,7 @@ class Player:
             if new_spaceship is not None:
                 for item, count in self.spaceship.cargo_hold.items():
                     new_spaceship.cargo_hold[item] += count
+                    self.spaceship.cargo_hold[item] = 0
 
                 if not isinstance(self.spaceship, Explorer):
                     self.hanger.append(self.spaceship)
@@ -1367,7 +1371,7 @@ class Player:
             if isinstance(self.current_location, Planet)
             and self.inventory["cosmic_resin"] >= 160
             and self.inventory["hyper_dust"] >= 70
-            and self.inventory["nebular_gas_condensate"] >= 180
+            and self.inventory["presolar_grain"] >= 180
             and self.inventory["nebulite"] >= 35
             and self.inventory["water_ice"] >= 55
             else 0
@@ -1407,7 +1411,7 @@ class Player:
             1
             if isinstance(self.current_location, Planet)
             and self.inventory["cosmic_ice"] >= 50000
-            and self.inventory["nebular_gas_condensate"] >= 80000
+            and self.inventory["presolar_grain"] >= 80000
             and self.inventory["photon_dust"] >= 100000
             and self.inventory["quantum_foam"] >= 120000
             and self.inventory["solar_dust"] >= 150000

@@ -280,6 +280,7 @@ class Spaceship(ABC):
                     material.volume if hasattr(material, "volume") else DEFAULT_VOLUME
                 )
                 cargo_size += volume * quantity
+
         return cargo_size
 
     def is_cargo_full(self):
