@@ -82,7 +82,8 @@ class Planet(Location, Mineable):
                 0,
                 (
                     BASE_MINE_AMOUNT
-                    * (player.spaceship.mining + player.spaceship.level / 10)
+                    * player.spaceship.mining
+                    * (1 + player.spaceship.level / 10)
                     * (1 + player.skills["mining"] * 0.001)
                 )
                 // material.rarity,
