@@ -1,0 +1,11 @@
+name,type,power_balance
+quantum_thruster,engine,-50
+hyper_drive,engine,-100
+quantum_shield,shield,-20
+graviton_barrier,shield,-40
+nano_armor,armor,-30
+plasma_shield,armor,-60
+laser_cannon,weapon,-50
+particle_disruptor,weapon,-80
+quantum_reactor,power,100
+fusion_generator,power,200
