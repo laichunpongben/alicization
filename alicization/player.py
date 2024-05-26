@@ -820,7 +820,7 @@ class Player:
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
 
-                if self.can_pilot_miner():
+                if self.can_pilot_miner() and self.wallet < 200000:
                     action_index_probs.append((28, 0.5))
                 if self.can_pilot_corvette():
                     action_index_probs.append((29, 1))
@@ -877,7 +877,7 @@ class Player:
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
 
-                if self.can_pilot_miner():
+                if self.can_pilot_miner() and self.wallet < 200000:
                     action_index_probs.append((28, 0.5))
                 if self.can_pilot_corvette():
                     action_index_probs.append((29, 1))
@@ -941,6 +941,8 @@ class Player:
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
 
+                if self.can_pilot_miner() and self.wallet < 200000:
+                    action_index_probs.append((28, 0.5))
                 if self.can_pilot_corvette():
                     action_index_probs.append((29, 1))
                 if self.can_pilot_frigate():
@@ -1425,19 +1427,19 @@ class Player:
     def can_pilot_miner(self):
         return (
             1
-            if isinstance(self.current_location, Planet)
+            if isinstance(self.current_location, (Planet, Moon))
             and (
                 any(isinstance(spaceship, Miner) for spaceship in self.hanger)
                 or self.inventory["miner"] > 0
             )
-            and isinstance(self.spaceship, Explorer)
+            and isinstance(self.spaceship, (Explorer, Corvette, Frigate, Destroyer))
             else 0
         )
 
     def can_pilot_corvette(self):
         return (
             1
-            if isinstance(self.current_location, Planet)
+            if isinstance(self.current_location, (Planet, Moon))
             and (
                 any(isinstance(spaceship, Corvette) for spaceship in self.hanger)
                 or self.inventory["corvette"] > 0
@@ -1447,7 +1449,7 @@ class Player:
         )
 
     def can_pilot_frigate(self):
-        if isinstance(self.current_location, Planet):
+        if isinstance(self.current_location, (Planet, Moon)):
             has_frigate = (
                 any(isinstance(spaceship, Frigate) for spaceship in self.hanger)
                 or self.inventory.get("frigate", 0) > 0
@@ -1457,13 +1459,13 @@ class Player:
         return 0
 
     def can_pilot_destroyer(self):
-        if isinstance(self.current_location, Planet):
-            has_frigate = (
+        if isinstance(self.current_location, (Planet, Moon)):
+            has_destroyer = (
                 any(isinstance(spaceship, Destroyer) for spaceship in self.hanger)
                 or self.inventory.get("destroyer", 0) > 0
             )
             can_pilot = isinstance(self.spaceship, (Explorer, Miner, Corvette, Frigate))
-            return int(has_frigate and can_pilot)
+            return int(has_destroyer and can_pilot)
         return 0
 
     def can_place_bounty(self):
