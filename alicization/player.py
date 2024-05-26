@@ -25,6 +25,7 @@ from .spaceships.explorer import Explorer
 from .spaceships.miner import Miner
 from .spaceships.corvette import Corvette
 from .spaceships.frigate import Frigate
+from .spaceships.destroyer import Destroyer
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,8 @@ ACTION_ENUMS = [
     Action.PILOT_FRIGATE,
     Action.PLACE_BOUNTY,
     Action.INVEST_DRYDOCK,
+    Action.BUILD_DESTROYER,
+    Action.PILOT_DESTROYER,
 ]
 ACTIONS = [action.value for action in ACTION_ENUMS]
 NUM_ATTACK_ROUND = 10
@@ -105,7 +108,7 @@ class Player:
         if self.control == Control.NEURAL_AI:
             self.learning_agent = DQNAgent(
                 actions=ACTIONS,
-                input_size=67,  # Adjust based on the state representation
+                input_size=69,  # Adjust based on the state representation
                 hidden_sizes=[128, 256, 128],  # Adjust as needed
                 output_size=len(ACTIONS),
                 batch_size=128,
@@ -301,6 +304,14 @@ class Player:
 
     def build_frigate(self):
         blueprint_name = "frigate"
+        if self.can_build_frigate():
+            self.manufacture(blueprint_name)
+            logger.debug(f"Building {blueprint_name}")
+        else:
+            logger.warning(f"No enough materials to build {blueprint_name} spaceship!")
+
+    def build_destroyer(self):
+        blueprint_name = "destroyer"
         if self.can_build_frigate():
             self.manufacture(blueprint_name)
             logger.debug(f"Building {blueprint_name}")
@@ -536,7 +547,7 @@ class Player:
 
     def buy_spaceship(self):
         if self.can_buy_spaceship():
-            for spaceship in ["frigate", "corvette", "miner"]:
+            for spaceship in ["destroyer", "frigate", "corvette", "miner"]:
                 if self.buy(spaceship, 1):
                     logger.info(
                         f"{self.name} bought a {spaceship} at {self.current_system.name} - {self.current_location.name}"
@@ -547,7 +558,7 @@ class Player:
 
     def sell_spaceship(self):
         if self.can_sell_spaceship():
-            for spaceship in ["frigate", "corvette", "miner"]:
+            for spaceship in ["destroyer", "frigate", "corvette", "miner"]:
                 if self.sell(spaceship, 1):
                     logger.info(
                         f"{self.name} sold a {spaceship} at {self.current_system.name} - {self.current_location.name}"
@@ -639,6 +650,34 @@ class Player:
                 logger.warning("No frigate spaceship")
         else:
             logger.warning("Cannot pilot frigate spaceship from this location.")
+
+    def pilot_destroyer(self):
+        if self.can_pilot_destroyer():
+            new_spaceship = None
+            for spaceship in self.hanger:
+                if isinstance(spaceship, Destroyer):
+                    new_spaceship = spaceship
+                    self.hanger.remove(spaceship)
+                    break
+
+            if new_spaceship is None:
+                self.inventory["destroyer"] -= 1
+                new_spaceship = Destroyer()
+
+            if new_spaceship is not None:
+                for item, count in self.spaceship.cargo_hold.items():
+                    new_spaceship.cargo_hold[item] += count
+
+                if not isinstance(self.spaceship, Explorer):
+                    self.hanger.append(self.spaceship)
+                self.spaceship = new_spaceship
+                logger.info(
+                    f"{self.name} piloted a destroyer spaceship at {self.current_system.name} - {self.current_location.name}"
+                )
+            else:
+                logger.warning("No destroyer spaceship")
+        else:
+            logger.warning("Cannot pilot destroyer spaceship from this location.")
 
     def place_bounty(self):
         if self.can_place_bounty():
@@ -736,13 +775,14 @@ class Player:
 
                 if self.can_pilot_corvette():
                     action_index_probs.append((29, 1))
-
-                if self.can_pilot_frigate() and self.wallet >= 6e6:
+                if self.can_pilot_frigate() and self.wallet >= 5.3e6:
                     action_index_probs.append((30, 1))
+                if self.can_pilot_destroyer() and self.wallet >= 4.5e8:
+                    action_index_probs.append((34, 1))
 
                 ready_to_bombard = (
                     self.can_bombard()
-                    and isinstance(self.spaceship, (Frigate, Corvette))
+                    and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
                     and self.spaceship.hull == self.spaceship.max_hull
                     and self.spaceship.level == self.spaceship.max_level
                 )
@@ -784,12 +824,14 @@ class Player:
                     action_index_probs.append((28, 0.5))
                 if self.can_pilot_corvette():
                     action_index_probs.append((29, 1))
-                if self.can_pilot_frigate() and self.wallet >= 6e6:
+                if self.can_pilot_frigate() and self.wallet >= 5.3e6:
                     action_index_probs.append((30, 1))
+                if self.can_pilot_destroyer() and self.wallet >= 4.5e8:
+                    action_index_probs.append((34, 1))
 
                 ready_to_mission = (
                     self.can_mission()
-                    and isinstance(self.spaceship, (Frigate, Corvette))
+                    and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
                     and self.spaceship.armor == self.spaceship.max_armor
                     and self.spaceship.hull == self.spaceship.max_hull
                 )
@@ -841,10 +883,12 @@ class Player:
                     action_index_probs.append((29, 1))
                 if self.can_pilot_frigate():
                     action_index_probs.append((30, 1))
+                if self.can_pilot_destroyer():
+                    action_index_probs.append((34, 1))
 
                 ready_to_mission = (
                     self.can_mission()
-                    and isinstance(self.spaceship, (Frigate, Corvette))
+                    and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
                     and self.spaceship.hull == self.spaceship.max_hull
                     and self.spaceship.armor == self.spaceship.max_armor
                 )
@@ -853,7 +897,7 @@ class Player:
 
                 ready_to_kill = (
                     self.can_attack()
-                    and isinstance(self.spaceship, (Frigate, Corvette))
+                    and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
                     and self.spaceship.hull == self.spaceship.max_hull
                     and self.spaceship.armor == self.spaceship.max_armor
                 )
@@ -897,10 +941,12 @@ class Player:
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
 
+                if self.can_pilot_corvette():
+                    action_index_probs.append((29, 1))
                 if self.can_pilot_frigate():
                     action_index_probs.append((30, 1))
-                elif self.can_pilot_corvette():
-                    action_index_probs.append((29, 1))
+                if self.can_pilot_destroyer():
+                    action_index_probs.append((34, 1))
 
                 wanteds = [
                     x[0] for x in leaderboard.get_top_leaders("bounty", 10) if x[1] > 0
@@ -928,7 +974,7 @@ class Player:
                     logger.debug("Killer match!")
                 should_police = (
                     self.can_attack()
-                    and isinstance(self.spaceship, (Frigate, Corvette))
+                    and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
                     and self.spaceship.hull == self.spaceship.max_hull
                     and killer_match
                 )
@@ -982,8 +1028,10 @@ class Player:
                 if self.can_unload() and self.spaceship.is_cargo_full():
                     action_index_probs.append((9, 1))
 
+                if self.can_build_destroyer():
+                    action_index_probs.append((33, 1))
                 if self.can_build_frigate():
-                    action_index_probs.append((27, 1))
+                    action_index_probs.append((27, 0.1))
                 if self.can_build_corvette():
                     action_index_probs.append((26, 0.01))
                 if self.can_build_miner():
@@ -1080,6 +1128,10 @@ class Player:
             self.place_bounty()
         elif action == Action.INVEST_DRYDOCK.value:
             self.invest_drydock_random_amount()
+        elif action == Action.BUILD_DESTROYER.value:
+            self.build_destroyer()
+        elif action == Action.PILOT_DESTROYER.value:
+            self.pilot_destroyer()
         else:
             logger.error("Not matching any action!!")
         self.action_history[ACTIONS[action_index]] += 1
@@ -1291,7 +1343,7 @@ class Player:
                 >= self.current_location.marketplace.inventory[spaceship]["price"]
                 and self.current_location.marketplace.inventory[spaceship]["quantity"]
                 > 0
-                for spaceship in ["miner", "corvette", "frigate"]
+                for spaceship in ["miner", "corvette", "frigate", "destroyer"]
             )
             else 0
         )
@@ -1302,7 +1354,7 @@ class Player:
             if isinstance(self.current_location, Planet)
             and any(
                 self.inventory[spaceship] > 0
-                for spaceship in ["miner", "corvette", "frigate"]
+                for spaceship in ["miner", "corvette", "frigate", "destroyer"]
             )
             else 0
         )
@@ -1348,6 +1400,28 @@ class Player:
             else 0
         )
 
+    def can_build_destroyer(self):
+        return (
+            1
+            if isinstance(self.current_location, Planet)
+            and self.inventory["cosmic_ice"] >= 50000
+            and self.inventory["nebular_gas_condensate"] >= 80000
+            and self.inventory["photon_dust"] >= 100000
+            and self.inventory["quantum_foam"] >= 120000
+            and self.inventory["solar_dust"] >= 150000
+            and self.inventory["antigravity_dust"] >= 100000
+            and self.inventory["etherium"] >= 120000
+            and self.inventory["hyperspace_flux"] >= 50000
+            and self.inventory["nullmetal"] >= 150000
+            and self.inventory["rare_earth_minerals"] >= 80000
+            and self.inventory["aetherium"] >= 30000
+            and self.inventory["chronomite"] >= 70000
+            and self.inventory["dimensional_rift_residue"] >= 40000
+            and self.inventory["warpflux"] >= 60000
+            and self.inventory["xylothium"] >= 50000
+            else 0
+        )
+
     def can_pilot_miner(self):
         return (
             1
@@ -1379,6 +1453,16 @@ class Player:
                 or self.inventory.get("frigate", 0) > 0
             )
             can_pilot = isinstance(self.spaceship, (Explorer, Miner, Corvette))
+            return int(has_frigate and can_pilot)
+        return 0
+
+    def can_pilot_destroyer(self):
+        if isinstance(self.current_location, Planet):
+            has_frigate = (
+                any(isinstance(spaceship, Destroyer) for spaceship in self.hanger)
+                or self.inventory.get("destroyer", 0) > 0
+            )
+            can_pilot = isinstance(self.spaceship, (Explorer, Miner, Corvette, Frigate))
             return int(has_frigate and can_pilot)
         return 0
 
@@ -1529,9 +1613,11 @@ class Player:
             "can_build_miner": self.can_build_miner(),
             "can_build_corvette": self.can_build_corvette(),
             "can_build_frigate": self.can_build_frigate(),
+            "can_build_destroyer": self.can_build_destroyer(),
             "can_pilot_miner": self.can_pilot_miner(),
             "can_pilot_corvette": self.can_pilot_corvette(),
             "can_pilot_frigate": self.can_pilot_frigate(),
+            "can_pilot_destroyer": self.can_pilot_destroyer(),
             "can_place_bounty": self.can_place_bounty(),
             "spaceship": self.get_current_spaceship_type(),
             "spaceship_level": self.spaceship.level,

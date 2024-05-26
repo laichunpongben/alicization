@@ -37,3 +37,5 @@ class Action(Enum):
     PILOT_FRIGATE = "pilot_frigate"  # 30
     PLACE_BOUNTY = "place_bounty"  # 31
     INVEST_DRYDOCK = "invest_drydock"  # 32
+    BUILD_DESTROYER = "build_destroyer"  # 33
+    PILOT_DESTROYER = "pilot_destroyer"  # 34
