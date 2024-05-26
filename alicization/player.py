@@ -642,7 +642,7 @@ class Player:
 
     def place_bounty(self):
         if self.can_place_bounty():
-            spend_factor = 0.1
+            spend_factor = 0.01
             upper_bound = max(MIN_BOUNTY, int(self.wallet * spend_factor))
             bounty = random.randint(MIN_BOUNTY, upper_bound)
             self.spend(bounty)
