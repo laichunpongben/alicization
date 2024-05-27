@@ -1,144 +1,151 @@
 description,difficulty,reward
-Deliver emergency medical supplies to a space station,1,600
-Repair minor damage on a spacecraft,1,600
-Assist in the construction of a new spaceport,1,600
-Deliver fuel to a space station,1,600
-Transport a team of engineers to a damaged space station,1,600
-Assist in the construction of a new space station module,1,600
-Deliver supplies to a small space station,1,600
-Escort a research probe through a safe system,1,600
-Retrieve a lost drone,1,600
-Retrieve data from a research probe,1,600
-Assist with the deployment of a new satellite,1,600
-Scan for signs of alien activity in a specific sector,1,600
-Retrieve a lost communication satellite,1,600
-Clear out space debris from a dangerous orbital lane,1,600
-Escort a scientific expedition to a remote asteroid field,1,600
-Deliver spare parts to a damaged cargo ship stranded in deep space,1,600
-Scan for potential resources on a nearby asteroid,1,600
-Deliver emergency supplies to a space station experiencing a minor power outage,1,600
-Escort a research probe through a dangerous asteroid field,1,600
-Repair a damaged communication relay satellite in orbit,1,600
-Clear out space debris from a critical orbital lane,1,600
-Deliver medical supplies to a remote colony,1,600
-Scan nearby star systems for potential habitable planets,1,600
-Repair minor damage on a cargo ship,1,600
-Provide security for a scientific research team,1,600
-Deliver medical supplies to a quarantined space station,1,600
-Deliver supplies to a small space station,1,600
-Escort a passenger ship through a known pirate-infested sector,1,600
-Retrieve a lost research probe from a dangerous asteroid field,1,600
-Deliver supplies to a remote lunar colony,1,700
-Investigate a distress signal from a stranded civilian spacecraft,1,700
-Clear out space debris from a heavily trafficked trade route,1,700
-Investigate reports of smugglers operating in a remote asteroid belt,1,700
-Repair a minor malfunction in a communication relay,1,700
-Deliver emergency supplies to a remote outpost,1,700
-Provide security for a trade route,1,700
-Scan for potential resource deposits on a planet,1,700
-Clear out space debris from a specific orbital lane,1,700
-Deliver a shipment of manufactured goods to a space station,1,700
-Escort a scientific expedition to a remote nebula,1,700
-Retrieve a lost research team from a hostile moon,1,700
-Mine 10 units of ore,1,700
-Retrieve valuable cargo from a crashed transport ship on a nearby planet,1,700
-Assist in the construction of a space station module,1,700
-Transport a group of scientists to a space station,1,700
-Escort a passenger ship through a known pirate-infested sector,1,700
-Collect samples from a safe asteroid field,1,700
-Retrieve a lost cargo container from a debris field,1,700
-Retrieve lost equipment from a malfunctioning orbital research platform,1,700
-Deliver supplies to a remote outpost on a planet,1,700
-Rescue stranded miners trapped in a collapsed asteroid tunnel,1,700
-Transport construction materials to a remote space colony,1,700
-Deliver emergency medical supplies to a space station under quarantine,1,700
-Clear space debris from a critical orbital lane,1,700
-Escort a transport ship through a safe sector,1,700
-Escort a scientific expedition,1,700
-Escort a passenger ship through a safe sector,1,700
-Repair a damaged communication relay satellite,1,700
-Deliver spare parts to a damaged space station,1,700
-Escort a transport ship through a hazardous asteroid field,1,700
-Escort a research team to a remote asteroid field,1,700
-Escort a transport ship through a sector known for pirate activity,1,700
-Scan nearby star systems for signs of alien activity,1,800
-Clear space debris from a spaceport launch site,1,800
-Rescue a lost research probe,1,800
-Deliver supplies to a remote lunar base,1,800
-Escort a cargo ship through a safe sector,1,800
-Retrieve valuable data from a malfunctioning space probe,1,800
-Deliver supplies to a remote outpost on a moon,1,800
-Transport supplies to a remote research outpost,1,800
-Retrieve data from a research probe orbiting a nearby planet,1,800
-Locate and recover lost navigation beacons in a debris field,1,800
-Retrieve lost equipment from a malfunctioning orbital research platform,1,800
-Transport workers to a mining station,1,800
-Scan for potential habitable planets in a nearby system,1,800
-Escort a cargo ship through a sector known for pirate activity,1,800
-Rescue survivors from a disabled passenger liner adrift in space,1,800
-Deliver mail to a lunar colony,1,800
-Scan for signs of life on a barren moon,1,800
-Assist in the repair of a damaged space station,1,800
-Retrieve data from a research probe studying a black hole,1,800
-Assist in the repair of a damaged space station,1,800
-Clear out space debris from a critical orbital lane,2,1100
-Deliver goods to Planet X,2,1100
-Assist in the construction of a new space station module,2,1200
-Assist in the repair of a damaged orbital defense platform,2,1300
-Deliver supplies to a small space station,2,1300
-Retrieve lost equipment from a malfunctioning orbital research platform,2,1400
-Retrieve a lost research probe from a dangerous asteroid field,2,1400
-Escort a research team to a remote asteroid field,2,1400
-Deliver supplies to a remote outpost on a planet,2,1500
-Escort a passenger ship through a known pirate-infested sector,2,1500
-Retrieve data from a research probe orbiting a nearby planet,2,1500
-Escort a scientific expedition to a remote asteroid field,2,1500
-Find lost artifacts on Moon Alpha,3,1900
-Rescue stranded astronauts from a derelict spaceship,3,1900
-Investigate anomalies in a nebula,3,2000
-Assist in repairing a malfunctioning space station,3,2000
-Protect a convoy from pirate attacks,3,2200
-Explore a new system,3,2200
-Retrieve valuable data from a crashed probe,3,2200
-Neutralize rogue AI drones,3,2300
-Locate and retrieve a lost artifact from an abandoned ruin,3,2400
-Escort cargo ships through a known pirate-infested sector,3,2600
-Investigate mysterious signals in Asteroid Belt Beta,3,2600
-Investigate reports of strange energy readings near a black hole,4,3300
-Escort a convoy of civilian ships through a dangerous asteroid field,4,3400
-Assist in repairing a malfunctioning hyperspace navigation computer,4,3500
-Repair a damaged communication relay satellite in orbit around a moon,4,3600
-Dangerous mission,4,3600
-Assist in repairing a damaged orbital defense platform,4,3900
-Defeat space pirates,4,4000
-Provide escort for a scientific expedition studying a nearby nebula,4,4000
-Infiltrate a heavily guarded enemy base and retrieve classified data,5,4900
-Rescue a research team stranded on a hostile moon,5,5000
-Escort a VIP through dangerous territory,5,5300
-Survey a newly discovered wormhole,5,5700
-Navigate through a dangerous asteroid field to rescue a stranded ship,5,6300
-Clear out hostile alien nests on Planet Zeta,5,6300
-Extract rare minerals from an unstable asteroid,5,6700
-Assassinate a high-ranking enemy official to disrupt their plans,6,7400
-Navigate through a dangerous wormhole and emerge in uncharted territory,6,7500
-Neutralize a notorious space pirate leader and dismantle their operation,6,7800
-Survive an ambush by hostile alien forces and escape with valuable technology,6,8000
-Explore the depths of a forbidden sector and uncover ancient alien secrets,6,8700
-Retrieve a powerful artifact from a hidden temple guarded by ancient traps,6,9100
-Uncover the Secrets of a Forbidden Zone,7,11000
-Liberate a Rebellious Planet,7,11300
-Defend a besieged space station against a massive alien invasion,7,11900
-Locate the Lost City of the Ancients,7,15000
-Rescue a Key Political Figure from an Enemy Prison,7,15700
-Conduct a daring heist on a heavily fortified intergalactic bank,8,19800
-Steal the Galactic Treaty,8,21400
-Destroy the Enemy's Quantum Research Facility,8,21700
-Break the Enemy's Hyperspace Network,8,26600
-Infiltrate the Enemy's Superweapon Facility,9,30200
-Defeat the Ancient AI,9,33500
-Prevent the Launch of a Doomsday Device,9,33900
-Assassinate the Supreme Commander of the Enemy Fleet,10,41000
-Destroy the Heart of the Swarm,10,53200
-Steal the Enemy's Battle Plans,11,72800
-Capture an Enemy Scientist Working on a Superweapon,12,102300
-Destroy the Enemy's Planetary Defense Grid,13,130300
+Rescue survivors from a disabled passenger liner adrift in space,1,900
+Repair minor damage on a spacecraft,1,910
+Investigate reports of smugglers operating in a remote asteroid belt,1,910
+Clear space debris from a spaceport launch site,1,910
+Assist in the repair of a damaged space station,1,910
+Escort a research probe through a dangerous asteroid field,1,920
+Repair minor damage on a cargo ship,1,920
+Repair a minor malfunction in a communication relay,1,920
+Deliver emergency supplies to a remote outpost,1,920
+Transport construction materials to a remote space colony,1,920
+Deliver supplies to a remote lunar base,1,920
+Retrieve valuable data from a malfunctioning space probe,1,920
+Retrieve data from a research probe orbiting a nearby planet,1,920
+Scan for signs of life on a barren moon,1,920
+Transport a team of engineers to a damaged space station,1,930
+Repair a damaged communication relay satellite in orbit,1,930
+Deliver supplies to a remote outpost on a planet,1,930
+Clear space debris from a critical orbital lane,1,930
+Escort a transport ship through a safe sector,1,930
+Escort a scientific expedition,1,930
+Deliver supplies to a remote outpost on a moon,1,930
+Scan for potential habitable planets in a nearby system,1,930
+Provide security for a scientific research team,1,940
+Escort a passenger ship through a known pirate-infested sector,1,940
+Deliver supplies to a remote lunar colony,1,940
+Clear out space debris from a specific orbital lane,1,940
+Escort a scientific expedition to a remote nebula,1,940
+Transport a group of scientists to a space station,1,940
+Retrieve a lost cargo container from a debris field,1,940
+Retrieve lost equipment from a malfunctioning orbital research platform,1,940
+Escort a cargo ship through a sector known for pirate activity,1,940
+Deliver supplies to a small space station,1,950
+Retrieve a lost research probe from a dangerous asteroid field,1,950
+Escort a transport ship through a hazardous asteroid field,1,950
+Scan nearby star systems for signs of alien activity,1,950
+Rescue a lost research probe,1,950
+Transport workers to a mining station,1,950
+Deliver fuel to a space station,1,960
+Assist with the deployment of a new satellite,1,960
+Scan for signs of alien activity in a specific sector,1,960
+Scan nearby star systems for potential habitable planets,1,960
+Investigate a distress signal from a stranded civilian spacecraft,1,960
+Mine 10 units of ore,1,960
+Escort a research team to a remote asteroid field,1,960
+Retrieve lost equipment from a malfunctioning orbital research platform,1,960
+Retrieve data from a research probe,1,970
+Clear out space debris from a dangerous orbital lane,1,970
+Deliver medical supplies to a quarantined space station,1,970
+Retrieve a lost research team from a hostile moon,1,970
+Rescue stranded miners trapped in a collapsed asteroid tunnel,1,970
+Transport supplies to a remote research outpost,1,970
+Retrieve a lost drone,1,980
+Retrieve a lost communication satellite,1,980
+Deliver emergency supplies to a space station experiencing a minor power outage,1,990
+Deliver a shipment of manufactured goods to a space station,1,990
+Escort a research probe through a safe system,1,1000
+Deliver supplies to a small space station,1,1000
+Provide security for a trade route,1,1000
+Assist in the construction of a space station module,1,1000
+Repair a damaged communication relay satellite,1,1000
+Deliver mail to a lunar colony,1,1000
+Deliver emergency medical supplies to a space station,1,1010
+Deliver spare parts to a damaged cargo ship stranded in deep space,1,1010
+Clear out space debris from a heavily trafficked trade route,1,1010
+Collect samples from a safe asteroid field,1,1010
+Scan for potential resources on a nearby asteroid,1,1020
+Escort a transport ship through a sector known for pirate activity,1,1020
+Locate and recover lost navigation beacons in a debris field,1,1020
+Assist in the repair of a damaged space station,1,1020
+Assist in the construction of a new spaceport,1,1030
+Assist in the construction of a new space station module,1,1030
+Scan for potential resource deposits on a planet,1,1030
+Retrieve valuable cargo from a crashed transport ship on a nearby planet,1,1030
+Escort a passenger ship through a safe sector,1,1030
+Escort a scientific expedition to a remote asteroid field,1,1040
+Escort a passenger ship through a known pirate-infested sector,1,1040
+Escort a cargo ship through a safe sector,1,1040
+Retrieve data from a research probe studying a black hole,1,1040
+Clear out space debris from a critical orbital lane,1,1050
+Deliver medical supplies to a remote colony,1,1050
+Deliver emergency medical supplies to a space station under quarantine,1,1050
+Deliver spare parts to a damaged space station,1,1050
+Deliver supplies to a remote outpost on a planet,2,1840
+Escort a passenger ship through a known pirate-infested sector,2,1860
+Deliver goods to Planet X,2,1870
+Retrieve data from a research probe orbiting a nearby planet,2,1920
+Assist in the construction of a new space station module,2,1930
+Retrieve a lost research probe from a dangerous asteroid field,2,1980
+Deliver supplies to a small space station,2,1990
+Retrieve lost equipment from a malfunctioning orbital research platform,2,1990
+Escort a scientific expedition to a remote asteroid field,2,1990
+Clear out space debris from a critical orbital lane,2,2010
+Assist in the repair of a damaged orbital defense platform,2,2020
+Escort a research team to a remote asteroid field,2,2060
+Escort cargo ships through a known pirate-infested sector,3,9180
+Retrieve valuable data from a crashed probe,3,9200
+Investigate anomalies in a nebula,3,9430
+Assist in repairing a malfunctioning space station,3,9450
+Neutralize rogue AI drones,3,9520
+Explore a new system,3,9570
+Find lost artifacts on Moon Alpha,3,9580
+Rescue stranded astronauts from a derelict spaceship,3,9590
+Protect a convoy from pirate attacks,3,10010
+Locate and retrieve a lost artifact from an abandoned ruin,3,10080
+Investigate mysterious signals in Asteroid Belt Beta,3,10180
+Repair a damaged communication relay satellite in orbit around a moon,4,12200
+Assist in repairing a malfunctioning hyperspace navigation computer,4,12900
+Assist in repairing a damaged orbital defense platform,4,12960
+Provide escort for a scientific expedition studying a nearby nebula,4,13070
+Defeat space pirates,4,13230
+Escort a convoy of civilian ships through a dangerous asteroid field,4,13540
+Investigate reports of strange energy readings near a black hole,4,14070
+Dangerous mission,4,14200
+Escort a VIP through dangerous territory,5,16330
+Infiltrate a heavily guarded enemy base and retrieve classified data,5,16520
+Navigate through a dangerous asteroid field to rescue a stranded ship,5,17040
+Survey a newly discovered wormhole,5,17170
+Extract rare minerals from an unstable asteroid,5,17370
+Clear out hostile alien nests on Planet Zeta,5,17780
+Rescue a research team stranded on a hostile moon,5,18590
+Neutralize a notorious space pirate leader and dismantle their operation,6,22680
+Survive an ambush by hostile alien forces and escape with valuable technology,6,23090
+Explore the depths of a forbidden sector and uncover ancient alien secrets,6,24170
+Retrieve a powerful artifact from a hidden temple guarded by ancient traps,6,24350
+Navigate through a dangerous wormhole and emerge in uncharted territory,6,24810
+Assassinate a high-ranking enemy official to disrupt their plans,6,25380
+Rescue a Key Political Figure from an Enemy Prison,7,28990
+Locate the Lost City of the Ancients,7,29220
+Liberate a Rebellious Planet,7,31560
+Uncover the Secrets of a Forbidden Zone,7,32500
+Defend a besieged space station against a massive alien invasion,7,33090
+Conduct a daring heist on a heavily fortified intergalactic bank,8,38310
+Break the Enemy's Hyperspace Network,8,39650
+Destroy the Enemy's Quantum Research Facility,8,40180
+Steal the Galactic Treaty,8,42780
+Prevent the Launch of a Doomsday Device,9,51370
+Defeat the Ancient AI,9,53980
+Infiltrate the Enemy's Superweapon Facility,9,55340
+Assassinate the Supreme Commander of the Enemy Fleet,10,71000
+Destroy the Heart of the Swarm,10,72470
+Steal the Enemy's Battle Plans,11,95840
+Capture an Enemy Scientist Working on a Superweapon,12,287910
+Destroy the Enemy's Planetary Defense Grid,13,328160
+Rescue a Renegade Scientist from a Black Hole Prison,14,394290
+Sabotage the Enemy's Terraforming Project,15,516410
+Recover a Lost Artifact from a Time-Locked Dimension,16,689900
+Hijack an Enemy Flagship in Hyperspace,17,886260
+Disable the Enemy's Cloaking Field Generator,18,1199620
+Secure a Truce with the Alien Warlord,19,1442370
+Expose a Spy Ring within the Galactic Senate,20,1874130
