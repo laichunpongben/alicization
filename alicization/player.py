@@ -848,7 +848,8 @@ class Player:
                 if self.can_pilot_corvette():
                     if (isinstance(self.spaceship, (Explorer, Miner))) or (
                         isinstance(self.spaceship, (Frigate, Destroyer))
-                        and self.spaceship.shield < self.spaceship.max_shield * 0.5
+                        and self.spaceship.is_damaged()
+                        and self.wallet <= self.spaceship.calc_repair_cost()
                     ):
                         action_index_probs.append((29, 1))
                 if self.can_pilot_frigate():
@@ -914,7 +915,8 @@ class Player:
                 if self.can_pilot_corvette():
                     if (isinstance(self.spaceship, (Explorer, Miner))) or (
                         isinstance(self.spaceship, (Frigate, Destroyer))
-                        and self.spaceship.shield < self.spaceship.max_shield * 0.5
+                        and self.spaceship.is_damaged()
+                        and self.wallet <= self.spaceship.calc_repair_cost()
                     ):
                         action_index_probs.append((29, 1))
                 if self.can_pilot_frigate():
@@ -980,13 +982,12 @@ class Player:
                     )
                 ):
                     action_index_probs.append((28, 0.01))
-                if (
-                    self.can_pilot_corvette()
-                    and self.spaceship.shield < self.spaceship.max_shield * 0.5
-                ):
+
+                if self.can_pilot_corvette():
                     if (isinstance(self.spaceship, (Explorer, Miner))) or (
                         isinstance(self.spaceship, (Frigate, Destroyer))
-                        and self.spaceship.shield < self.spaceship.max_shield * 0.5
+                        and self.spaceship.is_damaged()
+                        and self.wallet <= self.spaceship.calc_repair_cost()
                     ):
                         action_index_probs.append((29, 1))
                 if self.can_pilot_frigate():
@@ -1057,12 +1058,15 @@ class Player:
                     )
                 ):
                     action_index_probs.append((28, 0.01))
+
                 if self.can_pilot_corvette():
                     if (isinstance(self.spaceship, (Explorer, Miner))) or (
                         isinstance(self.spaceship, (Frigate, Destroyer))
-                        and self.spaceship.shield < self.spaceship.max_shield * 0.5
+                        and self.spaceship.is_damaged()
+                        and self.wallet <= self.spaceship.calc_repair_cost()
                     ):
                         action_index_probs.append((29, 1))
+                        
                 if self.can_pilot_frigate():
                     action_index_probs.append((30, 1))
                 if self.can_pilot_destroyer():
