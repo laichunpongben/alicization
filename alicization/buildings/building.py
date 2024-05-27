@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 leaderboard = Leaderboard()
 
 MONOPOLY_THRESHOLD = 0.995
-MONOPOLY_SCORE = 100
+MONOPOLY_SCORE = 1000
 NUM_BOMBARD_ROUND = 10
 P_BOMBARD_HIT = 0.5
 DESTROY_SCORE = 10000

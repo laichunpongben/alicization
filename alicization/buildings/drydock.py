@@ -15,7 +15,6 @@ blueprint_manager = BlueprintManager()
 spaceship_manager = SpaceshipManager()
 leaderboard = Leaderboard()
 
-MONOPOLY_SCORE = 100
 MONOPOLY_THRESHOLD = 0.995
 NUM_BOMBARD_ROUND = 10
 P_BOMBARD_HIT = 0.5
@@ -97,9 +96,6 @@ class Drydock(Building):
             logger.info(f"{self.name} updated earning for {earning}.")
 
     def reset(self):
-        if self.monopoly and self.owner:
-            leaderboard.log_achievement(self.owner, "monopoly", -MONOPOLY_SCORE)
-
         self.level = 0
         self.investment = 0
         self.equities = defaultdict(float)
