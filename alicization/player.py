@@ -814,7 +814,7 @@ class Player:
                 if self.can_move_moon():
                     action_index_probs.append((3, 0.05))
                 if self.can_travel():
-                    action_index_probs.append((6, 0.001))
+                    action_index_probs.append((6, 0.01))
                 if self.can_mine():
                     action_index_probs.append((8, 0.2))
                 if self.can_unload():
@@ -831,6 +831,8 @@ class Player:
                     action_index_probs.append((32, 0.001))
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
+                if self.can_set_home():
+                    action_index_probs.append((22, 0.0005))
 
                 if self.can_pilot_miner() and (
                     self.wallet < 10000
@@ -1974,8 +1976,6 @@ class Player:
         ship_cargo_size = self.spaceship.calculate_cargo_size()
         return {
             "name": self.name,
-            "spaceshipClass": self.spaceship.ship_class,
-            "spaceshipLevel": self.spaceship.level,
             "system": self.current_system.name,
             "location": self.current_location.name,
             "wallet": self.wallet,
@@ -1995,4 +1995,5 @@ class Player:
             "build": self.build,
             "mined": self.mined,
             "actionHistory": self.action_history,
+            "spaceship": self.spaceship.to_json(),
         }

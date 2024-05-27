@@ -307,3 +307,31 @@ class Spaceship(ABC):
             logger.debug("Spaceship upgrade done!")
         else:
             logger.debug("Spaceship max upgrade reached!")
+
+    def to_json(self):
+        return {
+            'shipClass': self.ship_class,
+            'maxShield': self.max_shield,
+            'shield': self.shield,
+            'shieldUpgrade': self.shield_upgrade,
+            'maxArmor': self.max_armor,
+            'armor': self.armor,
+            'armorUpgrade': self.armor_upgrade,
+            'maxHull': self.max_hull,
+            'hull': self.hull,
+            'hullUpgrade': self.hull_upgrade,
+            'maxPower': self.max_power,
+            'power': self.power,
+            'weapon': self.weapon,
+            'weaponUpgrade': self.weapon_upgrade,
+            'engine': self.engine,
+            'baseShieldRecharge': self.base_shield_recharge,
+            'maxCargoSize': self.max_cargo_size,
+            'baseRepairCost': self.base_repair_cost,
+            'baseUpgradeCost': self.base_upgrade_cost,
+            'level': self.level,
+            'maxLevel': self.max_level,
+            'mining': self.mining,
+            'cargoHold': dict(self.cargo_hold),
+            'destroyed': self.destroyed
+        }
