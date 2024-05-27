@@ -999,6 +999,15 @@ class Player:
                 ):
                     action_index_probs.append((28, 0.01))
 
+                if self.can_pilot_extractor() and (
+                    self.wallet < 10000
+                    or (
+                        not self.can_pilot_corvette()
+                        and not isinstance(self.spaceship, Corvette)
+                    )
+                ):
+                    action_index_probs.append((36, 0.02))
+
                 if self.can_pilot_corvette():
                     if (isinstance(self.spaceship, (Explorer, Miner))) or (
                         isinstance(self.spaceship, (Frigate, Destroyer))
@@ -1076,6 +1085,15 @@ class Player:
                     )
                 ):
                     action_index_probs.append((28, 0.01))
+
+                if self.can_pilot_extractor() and (
+                    self.wallet < 10000
+                    or (
+                        not self.can_pilot_corvette()
+                        and not isinstance(self.spaceship, Corvette)
+                    )
+                ):
+                    action_index_probs.append((36, 0.02))
 
                 if self.can_pilot_corvette():
                     if (isinstance(self.spaceship, (Explorer, Miner))) or (
