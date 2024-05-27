@@ -27,8 +27,8 @@ class Action(Enum):
     ATTACK_WEAKEST = "attack_weakest"  # 20
     BOMBARD = "bombard"  # 21
     SET_HOME = "set_home"  # 22
-    BUY_SPACESHIP = "buy_spaceship"  # 23
-    SELL_SPACESHIP = "sell_spaceship"  # 24
+    BUY_WARSHIP = "buy_warship"  # 23
+    SELL_WARSHIP = "sell_warship"  # 24
     BUILD_MINER = "build_miner"  # 25
     BUILD_CORVETTE = "build_corvette"  # 26
     BUILD_FRIGATE = "build_frigate"  # 27
@@ -41,3 +41,5 @@ class Action(Enum):
     PILOT_DESTROYER = "pilot_destroyer"  # 34
     BUILD_EXTRACTOR = "build_extractor"  # 35
     PILOT_EXTRACTOR = "pilot_extractor"  # 36
+    BUY_MINING_SPACESHIP = "buy_mining_spaceship"  # 37
+    SELL_MINING_SPACESHIP = "sell_mining_spaceship"  # 38

@@ -59,8 +59,8 @@ ACTION_ENUMS = [
     Action.ATTACK_WEAKEST,
     Action.BOMBARD,
     Action.SET_HOME,
-    Action.BUY_SPACESHIP,
-    Action.SELL_SPACESHIP,
+    Action.BUY_WARSHIP,
+    Action.SELL_WARSHIP,
     Action.BUILD_MINER,
     Action.BUILD_CORVETTE,
     Action.BUILD_FRIGATE,
@@ -73,6 +73,8 @@ ACTION_ENUMS = [
     Action.PILOT_DESTROYER,
     Action.BUILD_EXTRACTOR,
     Action.PILOT_EXTRACTOR,
+    Action.BUY_MINING_SPACESHIP,
+    Action.SELL_MINING_SPACESHIP,
 ]
 ACTIONS = [action.value for action in ACTION_ENUMS]
 NUM_ATTACK_ROUND = 10
@@ -578,27 +580,49 @@ class Player:
         else:
             logger.warning("Cannot set home from this location.")
 
-    def buy_spaceship(self):
-        if self.can_buy_spaceship():
-            for spaceship in ["destroyer", "frigate", "corvette", "miner"]:
+    def buy_warship(self):
+        if self.can_buy_warship():
+            for spaceship in ["destroyer", "frigate", "corvette"]:
                 if self.buy(spaceship, 1):
                     logger.info(
                         f"{self.name} bought a {spaceship} at {self.current_system.name} - {self.current_location.name}"
                     )
                     break
         else:
-            logger.warning("Cannot buy spaceship from this location.")
+            logger.warning("Cannot buy warship from this location.")
 
-    def sell_spaceship(self):
-        if self.can_sell_spaceship():
-            for spaceship in ["destroyer", "frigate", "corvette", "miner"]:
+    def sell_warship(self):
+        if self.can_sell_warship():
+            for spaceship in ["destroyer", "frigate", "corvette"]:
                 if self.sell(spaceship, 1):
                     logger.info(
                         f"{self.name} sold a {spaceship} at {self.current_system.name} - {self.current_location.name}"
                     )
                     break
         else:
-            logger.warning("Cannot sell spaceship from this location.")
+            logger.warning("Cannot sell warship from this location.")
+
+    def buy_mining_spaceship(self):
+        if self.can_buy_mining_spaceship():
+            for spaceship in ["extractor", "miner"]:
+                if self.buy(spaceship, 1):
+                    logger.info(
+                        f"{self.name} bought a {spaceship} at {self.current_system.name} - {self.current_location.name}"
+                    )
+                    break
+        else:
+            logger.warning("Cannot buy mining ship from this location.")
+
+    def sell_mining_spaceship(self):
+        if self.can_sell_mining_spaceship():
+            for spaceship in ["extractor", "miner"]:
+                if self.sell(spaceship, 1):
+                    logger.info(
+                        f"{self.name} sold a {spaceship} at {self.current_system.name} - {self.current_location.name}"
+                    )
+                    break
+        else:
+            logger.warning("Cannot sell mining ship from this location.")
 
     def pilot_miner(self):
         if self.can_pilot_miner():
@@ -836,7 +860,7 @@ class Player:
                     action_index_probs.append((9, 0.01))
                 if self.can_sell():
                     action_index_probs.append((11, 0.01))
-                if self.can_buy_spaceship():
+                if self.can_buy_warship():
                     action_index_probs.append((23, 0.01))
                 if self.can_invest_factory():
                     action_index_probs.append((12, 0.001))
@@ -876,7 +900,7 @@ class Player:
                 if self.can_move_planet():
                     action_index_probs.append((1, 0.05))
                 if self.can_move_moon():
-                    action_index_probs.append((3, 0.05))
+                    action_index_probs.append((3, 0.1))
                 if self.can_move_stargate():
                     action_index_probs.append((4, 0.01))
                 if self.can_travel():
@@ -884,14 +908,12 @@ class Player:
                         action_index_probs.append((6, 0.01))
                     else:
                         action_index_probs.append((6, 1))
-                if self.can_mine():
-                    action_index_probs.append((8, 0.01))
                 if self.can_unload():
                     action_index_probs.append((9, 0.01))
                 if self.can_sell():
                     action_index_probs.append((11, 0.01))
-                if self.can_buy_spaceship():
-                    action_index_probs.append((23, 0.05))
+                if self.can_buy_warship():
+                    action_index_probs.append((23, 1))
                 if self.can_set_home():
                     action_index_probs.append((22, 0.001))
                 if self.can_invest_factory():
@@ -899,29 +921,21 @@ class Player:
                 if self.can_invest_drydock():
                     action_index_probs.append((32, 0.001))
                 if self.can_collect():
-                    action_index_probs.append((13, 0.001))
+                    action_index_probs.append((13, 0.01))
                 if self.can_set_home():
                     action_index_probs.append((22, 0.0005))
 
-                if self.can_pilot_miner() and (
-                    self.wallet < 10000
-                    or (
-                        not self.can_pilot_corvette()
-                        and not isinstance(self.spaceship, Corvette)
-                    )
-                ):
-                    action_index_probs.append((28, 0.0001))
-
                 if self.can_pilot_corvette():
-                    if (isinstance(self.spaceship, (Explorer, Miner))) or (
-                        isinstance(self.spaceship, (Frigate, Destroyer))
-                        and self.spaceship.is_damaged()
-                        and self.wallet <= self.spaceship.calc_repair_cost()
-                    ):
+                    if isinstance(self.spaceship, Explorer):
                         action_index_probs.append((29, 1))
-                if self.can_pilot_frigate():
+                    else:
+                        if self.spaceship.is_damaged() and self.wallet <= self.spaceship.calc_repair_cost():
+                            action_index_probs.append((29, 0.1))
+                        
+
+                if self.can_pilot_frigate() and self.wallet >= 500000:
                     action_index_probs.append((30, 1))
-                if self.can_pilot_destroyer():
+                if self.can_pilot_destroyer() and self.wallet >= 1250000:
                     action_index_probs.append((34, 1))
 
                 ready_to_mission = (
@@ -963,8 +977,10 @@ class Player:
                     action_index_probs.append((9, 0.01))
                 if self.can_sell():
                     action_index_probs.append((11, 0.01))
-                if self.can_buy_spaceship():
-                    action_index_probs.append((23, 0.01))
+                if self.can_buy_warship():
+                    action_index_probs.append((23, 0.1))
+                if self.can_buy_mining_spaceship():
+                    action_index_probs.append((37, 0.0001))
                 if self.can_set_home():
                     action_index_probs.append((22, 0.0005))
                 if self.can_invest_factory():
@@ -1041,8 +1057,10 @@ class Player:
                     action_index_probs.append((9, 0.01))
                 if self.can_sell():
                     action_index_probs.append((11, 0.01))
-                if self.can_buy_spaceship():
-                    action_index_probs.append((23, 0.01))
+                if self.can_buy_warship():
+                    action_index_probs.append((23, 0.1))
+                if self.can_buy_mining_spaceship():
+                    action_index_probs.append((37, 0.0001))
                 if self.can_invest_factory():
                     action_index_probs.append((12, 0.001))
                 if self.can_invest_drydock():
@@ -1137,10 +1155,12 @@ class Player:
                     action_index_probs.append((10, 0.01))
                 if self.can_sell():
                     action_index_probs.append((11, 0.01))
-                if self.can_buy_spaceship():
-                    action_index_probs.append((23, 0.02))
-                if self.can_sell_spaceship():
+                if self.can_buy_mining_spaceship():
+                    action_index_probs.append((37, 0.02))
+                if self.can_sell_warship():
                     action_index_probs.append((24, 0.03))
+                if self.can_sell_mining_spaceship():
+                    action_index_probs.append((38, 0.001))
                 if self.can_set_home():
                     action_index_probs.append((22, 0.001))
                 if self.can_place_bounty():
@@ -1246,10 +1266,10 @@ class Player:
             self.bombard_random_building()
         elif action == Action.SET_HOME.value:
             self.set_home()
-        elif action == Action.BUY_SPACESHIP.value:
-            self.buy_spaceship()
-        elif action == Action.SELL_SPACESHIP.value:
-            self.sell_spaceship()
+        elif action == Action.BUY_WARSHIP.value:
+            self.buy_warship()
+        elif action == Action.SELL_WARSHIP.value:
+            self.sell_warship()
         elif action == Action.BUILD_MINER.value:
             self.build_miner()
         elif action == Action.BUILD_CORVETTE.value:
@@ -1274,6 +1294,10 @@ class Player:
             self.build_extractor()
         elif action == Action.PILOT_EXTRACTOR.value:
             self.pilot_extractor()
+        elif action == Action.BUY_MINING_SPACESHIP.value:
+            self.buy_mining_spaceship()
+        elif action == Action.SELL_MINING_SPACESHIP.value:
+            self.sell_mining_spaceship()
         else:
             logger.error("Not matching any action!!")
         self.action_history[ACTIONS[action_index]] += 1
@@ -1479,7 +1503,7 @@ class Player:
             else 0
         )
 
-    def can_buy_spaceship(self):
+    def can_buy_warship(self):
         return (
             1
             if isinstance(self.current_location, Planet)
@@ -1488,18 +1512,43 @@ class Player:
                 >= self.current_location.marketplace.inventory[spaceship]["price"]
                 and self.current_location.marketplace.inventory[spaceship]["quantity"]
                 > 0
-                for spaceship in ["miner", "corvette", "frigate", "destroyer"]
+                for spaceship in ["destroyer", "frigate", "corvette"]
             )
             else 0
         )
 
-    def can_sell_spaceship(self):
+    def can_sell_warship(self):
         return (
             1
             if isinstance(self.current_location, Planet)
             and any(
                 self.inventory[spaceship] > 0
-                for spaceship in ["miner", "corvette", "frigate", "destroyer"]
+                for spaceship in ["destroyer", "frigate", "corvette"]
+            )
+            else 0
+        )
+    
+    def can_buy_mining_spaceship(self):
+        return (
+            1
+            if isinstance(self.current_location, Planet)
+            and any(
+                self.wallet
+                >= self.current_location.marketplace.inventory[spaceship]["price"]
+                and self.current_location.marketplace.inventory[spaceship]["quantity"]
+                > 0
+                for spaceship in ["extractor", "miner"]
+            )
+            else 0
+        )
+
+    def can_sell_mining_spaceship(self):
+        return (
+            1
+            if isinstance(self.current_location, Planet)
+            and any(
+                self.inventory[spaceship] > 0
+                for spaceship in ["extractor", "miner"]
             )
             else 0
         )
@@ -1786,8 +1835,10 @@ class Player:
             "can_attack": self.can_attack(),
             "can_bombard": self.can_bombard(),
             "can_set_home": self.can_set_home(),
-            "can_buy_spaceship": self.can_buy_spaceship(),
-            "can_sell_spaceship": self.can_sell_spaceship(),
+            "can_buy_warship": self.can_buy_warship(),
+            "can_sell_warship": self.can_sell_warship(),
+            "can_buy_mining_spaceship": self.can_buy_mining_spaceship(),
+            "can_sell_mining_spaceship": self.can_sell_mining_spaceship(),
             "can_build_miner": self.can_build_miner(),
             "can_build_corvette": self.can_build_corvette(),
             "can_build_frigate": self.can_build_frigate(),
