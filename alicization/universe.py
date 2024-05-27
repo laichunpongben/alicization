@@ -33,6 +33,7 @@ class Universe:
         self.total_money_spent = 0
         self.total_build = 0
         self.total_mined = 0
+        self.total_mission_completed = 0
         self.global_price_index = 1
 
         for _ in range(initial_systems):
@@ -287,5 +288,6 @@ class Universe:
             "totalMoneySpent": self.total_money_spent,
             "totalBuild": self.total_build,
             "totalMined": self.total_mined,
+            "totalMissionCompleted": self.total_mission_completed,
             "globalPriceIndex": self.global_price_index,
         }

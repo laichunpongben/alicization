@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 leaderboard = Leaderboard()
 
-MISSION_SUCCESS_BASE_DAMAGE = 50
-MISSION_FAIL_BASE_DAMAGE = 100
+MISSION_SUCCESS_BASE_DAMAGE = 45
+MISSION_FAIL_BASE_DAMAGE = 90
 
 NUM_BOMBARD_ROUND = 10
 P_BOMBARD_HIT = 0.5
@@ -110,6 +110,7 @@ class MissionCenter(Building):
                     mission.completed = True
                     player.wallet += mission.reward
                     player.mission_completed += 1
+                    player.universe.total_mission_completed += 1
                     player.skills["missioning"] = (
                         int(math.log(player.mission_completed) / math.log(math.sqrt(2)))
                         if player.mission_completed > 0
