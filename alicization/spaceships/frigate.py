@@ -22,7 +22,7 @@ class Frigate(Spaceship):
         self._weapon_upgrade = 15
         self._engine = 300
         self._max_cargo_size = 40000
-        self._base_repair_cost = 10000
+        self._base_repair_cost = 5000
         self._base_upgrade_cost = 20000
         self._max_level = 30
         self._mining = 0
