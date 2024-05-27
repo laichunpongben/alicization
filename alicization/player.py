@@ -49,7 +49,7 @@ ACTION_ENUMS = [
     Action.SELL,
     Action.INVEST_FACTORY,
     Action.COLLECT,
-    Action.MISSION,
+    Action.EASY_MISSION,
     Action.REPAIR,
     Action.UPGRADE,
     Action.SALVAGE,
@@ -82,6 +82,7 @@ P_SALVAGE = 0.95
 DEFAULT_SPACESHIP_COST = 1
 SET_HOME_COST = 1000
 MIN_BOUNTY = 1000
+NUM_RESPAWN_IDLE_TURN = 10
 
 
 class Player:
@@ -365,9 +366,23 @@ class Player:
         else:
             logger.warning("Cannot collect from this location.")
 
-    def mission(self):
+    def easy_mission(self):
         if isinstance(self.current_location, Moon):
-            mission_ = self.current_location.mission_center.apply_mission()
+            mission_ = self.current_location.mission_center.apply_mission_easiet()
+            if mission_:
+                result = self.current_location.mission_center.do_mission(self, mission_)
+                if result > 0:
+                    logger.debug(
+                        f"{self.name} completed mission {mission_.description} at {self.current_system.name} - {self.current_location.name}"
+                    )
+                else:
+                    logger.debug(f"{self.name} failed mission {mission_.description}")
+        else:
+            logger.warning("Cannot do mission from this location.")
+
+    def difficult_mission(self):
+        if isinstance(self.current_location, Moon):
+            mission_ = self.current_location.mission_center.apply_mission_hardest()
             if mission_:
                 result = self.current_location.mission_center.do_mission(self, mission_)
                 if result > 0:
@@ -408,7 +423,11 @@ class Player:
 
     def attack(self, target_player):
         damage = (
-            np.random.binomial(NUM_ATTACK_ROUND, P_ATTACK_HIT) * self.spaceship.weapon
+            np.random.binomial(
+                NUM_ATTACK_ROUND,
+                max(P_ATTACK_HIT * (1 + self.spaceship.level * 0.01), 1),
+            )
+            * self.spaceship.weapon
         )
         self.total_damage += damage
         self.universe.total_damage_dealt += damage
@@ -445,7 +464,10 @@ class Player:
                 logger.info(f"{self.name} earned {bounty} bounty!")
         else:
             defensive_damage = (
-                np.random.binomial(NUM_DEFENSE_ROUND, P_DEFENSE_HIT)
+                np.random.binomial(
+                    NUM_DEFENSE_ROUND,
+                    max(P_DEFENSE_HIT * (1 + target_player.spaceship.level * 0.01), 1),
+                )
                 * target_player.spaceship.weapon
             )
             target_player.total_damage += defensive_damage
@@ -588,7 +610,7 @@ class Player:
                 if not isinstance(self.spaceship, Explorer):
                     self.hanger.append(self.spaceship)
                 self.spaceship = new_spaceship
-                self.spaceship.recharge_shield_full()
+                self.spaceship.recharge_shield()
                 logger.info(
                     f"{self.name} piloted a miner spaceship at {self.current_system.name} - {self.current_location.name}"
                 )
@@ -618,7 +640,7 @@ class Player:
                 if not isinstance(self.spaceship, Explorer):
                     self.hanger.append(self.spaceship)
                 self.spaceship = new_spaceship
-                self.spaceship.recharge_shield_full()
+                self.spaceship.recharge_shield()
                 logger.info(
                     f"{self.name} piloted a corvette spaceship at {self.current_system.name} - {self.current_location.name}"
                 )
@@ -648,7 +670,7 @@ class Player:
                 if not isinstance(self.spaceship, Explorer):
                     self.hanger.append(self.spaceship)
                 self.spaceship = new_spaceship
-                self.spaceship.recharge_shield_full()
+                self.spaceship.recharge_shield()
                 logger.info(
                     f"{self.name} piloted a frigate spaceship at {self.current_system.name} - {self.current_location.name}"
                 )
@@ -678,7 +700,7 @@ class Player:
                 if not isinstance(self.spaceship, Explorer):
                     self.hanger.append(self.spaceship)
                 self.spaceship = new_spaceship
-                self.spaceship.recharge_shield_full()
+                self.spaceship.recharge_shield()
                 logger.info(
                     f"{self.name} piloted a destroyer spaceship at {self.current_system.name} - {self.current_location.name}"
                 )
@@ -717,6 +739,7 @@ class Player:
         self.home_system.add_player(self)
         self.home_system.empty_space.add_player(self)
         self.spaceship = Explorer()
+        self.turns_until_idle += NUM_RESPAWN_IDLE_TURN
         logger.warning(f"{self.name} respawned at {self.current_system.name}")
 
     def act(self):
@@ -787,9 +810,9 @@ class Player:
                         and self.spaceship.shield < self.spaceship.max_shield * 0.5
                     ):
                         action_index_probs.append((29, 1))
-                if self.can_pilot_frigate() and self.wallet >= 5.3e6:
+                if self.can_pilot_frigate():
                     action_index_probs.append((30, 1))
-                if self.can_pilot_destroyer() and self.wallet >= 4.5e8:
+                if self.can_pilot_destroyer():
                     action_index_probs.append((34, 1))
 
                 ready_to_bombard = (
@@ -812,19 +835,21 @@ class Player:
                     action_index_probs.append((1, 0.05))
                 if self.can_move_moon():
                     action_index_probs.append((3, 0.05))
+                if self.can_move_stargate():
+                    action_index_probs.append((4, 0.01))
                 if self.can_travel():
                     if self.can_move_moon():
                         action_index_probs.append((6, 0.01))
                     else:
                         action_index_probs.append((6, 1))
                 if self.can_mine():
-                    action_index_probs.append((8, 0.2))
+                    action_index_probs.append((8, 0.01))
                 if self.can_unload():
                     action_index_probs.append((9, 0.01))
                 if self.can_sell():
                     action_index_probs.append((11, 0.01))
                 if self.can_buy_spaceship():
-                    action_index_probs.append((23, 0.01))
+                    action_index_probs.append((23, 0.05))
                 if self.can_set_home():
                     action_index_probs.append((22, 0.001))
                 if self.can_invest_factory():
@@ -843,21 +868,24 @@ class Player:
                         and not isinstance(self.spaceship, Corvette)
                     )
                 ):
-                    action_index_probs.append((28, 0.01))
+                    action_index_probs.append((28, 0.0001))
+
                 if self.can_pilot_corvette():
                     if (isinstance(self.spaceship, (Explorer, Miner))) or (
                         isinstance(self.spaceship, (Frigate, Destroyer))
                         and self.spaceship.shield < self.spaceship.max_shield * 0.5
                     ):
                         action_index_probs.append((29, 1))
-                if self.can_pilot_frigate() and self.wallet >= 5.3e6:
+                if self.can_pilot_frigate():
                     action_index_probs.append((30, 1))
-                if self.can_pilot_destroyer() and self.wallet >= 4.5e8:
+                if self.can_pilot_destroyer():
                     action_index_probs.append((34, 1))
 
                 ready_to_mission = (
                     self.can_mission()
-                    and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
+                    and isinstance(
+                        self.spaceship, (Destroyer, Frigate, Corvette, Explorer)
+                    )
                     and math.isclose(self.spaceship.armor, self.spaceship.max_armor)
                     and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
                 )
@@ -1150,8 +1178,8 @@ class Player:
             self.invest_factory_random_amount()
         elif action == Action.COLLECT.value:
             self.collect()
-        elif action == Action.MISSION.value:
-            self.mission()
+        elif action == Action.EASY_MISSION.value:
+            self.easy_mission()
         elif action == Action.REPAIR.value:
             self.repair()
         elif action == Action.UPGRADE.value:
@@ -1198,6 +1226,8 @@ class Player:
 
     def health_check(self):
         self.spaceship.recharge_shield()
+        for spaceship in self.hanger:
+            spaceship.recharge_shield()
 
     def update_stats(self):
         self.net_worth = self.calculate_net_worth()

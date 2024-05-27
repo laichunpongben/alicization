@@ -1,4 +1,54 @@
 description,difficulty,reward
+Routine Spacecraft Maintenance,0,200
+Basic Cargo Delivery,0,200
+Standard Satellite Check,0,200
+Simple Space Debris Collection,0,200
+Routine Orbital Patrol,0,200
+Standard Equipment Inspection,0,200
+Basic Spacecraft Refueling,0,200
+Routine Space Station Supply Drop,0,200
+Basic Life Support System Check,0,200
+Standard Navigation System Test,0,200
+Simple Cargo Transport,0,200
+Routine Satellite Adjustment,0,200
+Basic Communication Check,0,200
+Standard Docking Procedure,0,200
+Simple Space Walk,0,200
+Routine Engine Maintenance,0,200
+Basic Sensor Calibration,0,200
+Standard Flight Path Adjustment,0,200
+Simple Emergency Drill,0,200
+Routine Spaceport Inspection,0,200
+Basic Thermal Shield Check,0,200
+Standard Antenna Alignment,0,200
+Simple Data Relay Test,0,200
+Routine Supply Inventory,0,200
+Basic Airlock Maintenance,0,200
+Standard Fuel Line Check,0,200
+Simple Orbital Maneuver,0,200
+Routine Reactor Inspection,0,200
+Basic Power System Check,0,200
+Standard Communications Relay Test,0,200
+Simple Space Probe Adjustment,0,200
+Routine Docking Bay Inspection,0,200
+Basic Navigation System Update,0,200
+Standard Propulsion System Test,0,200
+Simple Mission Briefing,0,200
+Routine Module Inspection,0,200
+Basic Supply Run,0,200
+Standard Cabin Pressure Check,0,200
+Simple Orbital Correction,0,200
+Routine Sensor Sweep,0,200
+Basic Emergency System Test,0,200
+Standard Heat Shield Inspection,0,200
+Simple Thruster Adjustment,0,200
+Routine Crew Roster Update,0,200
+Basic Air Quality Check,0,200
+Standard Water System Test,0,200
+Simple Course Correction,0,200
+Routine Flight Deck Inspection,0,200
+Basic Hull Integrity Check,0,200
+Standard Environmental System Test,0,200
 Rescue survivors from a disabled passenger liner adrift in space,1,900
 Repair minor damage on a spacecraft,1,910
 Investigate reports of smugglers operating in a remote asteroid belt,1,910

@@ -18,7 +18,7 @@ class Action(Enum):
     SELL = "sell"  # 11
     INVEST_FACTORY = "invest_factory"  # 12
     COLLECT = "collect"  # 13
-    MISSION = "mission"  # 14
+    EASY_MISSION = "easy_mission"  # 14
     REPAIR = "repair"  # 15
     UPGRADE = "upgrade"  # 16
     SALVAGE = "salvage"  # 17

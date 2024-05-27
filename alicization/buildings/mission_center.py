@@ -5,6 +5,7 @@ import uuid
 import random
 import math
 from pathlib import Path
+from enum import Enum
 import logging
 
 import numpy as np
@@ -17,14 +18,21 @@ logger = logging.getLogger(__name__)
 
 leaderboard = Leaderboard()
 
-MISSION_SUCCESS_BASE_DAMAGE = 45
-MISSION_FAIL_BASE_DAMAGE = 90
+MISSION_SUCCESS_BASE_DAMAGE = 40
+MISSION_FAIL_BASE_DAMAGE = 80
 
 NUM_BOMBARD_ROUND = 10
 P_BOMBARD_HIT = 0.5
 DESTROY_SCORE = 1000
 BASE_MISSION_SCORE = 10
 MAX_DAMAGE = 1e12
+NUM_MISSION = 4
+
+
+class MissionStatus(Enum):
+    OPEN = 0
+    COMPLETED = 1
+    CANCELED = 2
 
 
 class Mission:
@@ -32,7 +40,7 @@ class Mission:
         self.description = description
         self.difficulty = difficulty
         self.reward = reward
-        self.completed = False
+        self.status = MissionStatus.OPEN
 
 
 class MissionCenter(Building):
@@ -48,7 +56,7 @@ class MissionCenter(Building):
             self.missions_file = missions_file
         self.load_missions_from_csv(self.missions_file)
 
-    def load_missions_from_csv(self, missions_file, count=3):
+    def load_missions_from_csv(self, missions_file, count=NUM_MISSION):
         try:
             with open(missions_file, mode="r", newline="", encoding="utf-8") as file:
                 reader = csv.DictReader(file)
@@ -69,10 +77,21 @@ class MissionCenter(Building):
         self.missions.append(mission)
 
     def get_available_missions(self):
-        return [mission for mission in self.missions if not mission.completed]
+        return [
+            mission for mission in self.missions if mission.status == MissionStatus.OPEN
+        ]
 
     def has_missions(self):
-        return len([mission for mission in self.missions if not mission.completed]) > 0
+        return (
+            len(
+                [
+                    mission
+                    for mission in self.missions
+                    if mission.status == MissionStatus.OPEN
+                ]
+            )
+            > 0
+        )
 
     def get_best_reward_mission(self):
         available_missions = self.get_available_missions()
@@ -81,18 +100,37 @@ class MissionCenter(Building):
         best_mission = max(available_missions, key=lambda mission: mission.reward)
         return best_mission
 
-    def apply_mission(self):
+    def apply_mission_random(self):
         if self.cooldown <= 0:
             available_missions = self.get_available_missions()
             if len(available_missions) > 0:
                 return random.choice(available_missions)
         return None
 
+    def apply_mission_easiet(self):
+        if self.cooldown <= 0:
+            available_missions = self.get_available_missions()
+            if len(available_missions) > 0:
+                available_missions.sort(key=lambda m: m.difficulty)
+                return available_missions[0]
+        return None
+
+    def apply_mission_hardest(self):
+        if self.cooldown <= 0:
+            available_missions = self.get_available_missions()
+            if len(available_missions) > 0:
+                available_missions.sort(key=lambda m: m.difficulty, reverse=True)
+                return available_missions[0]
+        return None
+
     def do_mission(self, player, mission):
         if self.cooldown > 0:
             return 0
 
-        if mission in self.missions and not mission.completed:
+        if mission in self.missions and mission.status == MissionStatus.OPEN:
+            if mission.difficulty > 0 and player.spaceship.weapon <= 0:
+                return 0
+
             player.turns_until_idle += mission.difficulty
             skill_level = player.skills["missioning"]
             if self.mission_success(mission.difficulty, skill_level):
@@ -107,7 +145,7 @@ class MissionCenter(Building):
                     leaderboard.log_achievement(player.name, "death", 1)
                     result = 0
                 else:
-                    mission.completed = True
+                    mission.status = MissionStatus.COMPLETED
                     player.wallet += mission.reward
                     player.mission_completed += 1
                     player.universe.total_mission_completed += 1
@@ -150,9 +188,18 @@ class MissionCenter(Building):
 
     def respawn_missions(self):
         mission_count = len(self.get_available_missions())
-        if mission_count < 3 and random.random() < 0.1:
-            self.load_missions_from_csv(self.missions_file, count=3 - mission_count)
+        if mission_count < NUM_MISSION and random.random() < 0.1:
+            self.load_missions_from_csv(
+                self.missions_file, count=NUM_MISSION - mission_count
+            )
             logger.debug(f"Missions respawned in {self.name}")
+        else:
+            if mission_count > 0 and random.random() < 0.001:
+                missions = self.get_available_missions()
+                mission_to_cancel = random.choice(missions)
+                mission_to_cancel.status = MissionStatus.CANCELED
+                self.load_missions_from_csv(self.missions_file, count=1)
+                logger.debug(f"Mission {mission_to_cancel} replaced in {self.name}")
 
     def reset(self):
         self._hull = self._max_hull
