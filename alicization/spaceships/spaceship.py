@@ -259,6 +259,9 @@ class Spaceship(ABC):
     def recharge_shield(self):
         self.shield = min(self.shield + self.base_shield_recharge, self.max_shield)
 
+    def recharge_shield_full(self):
+        self.shield = self.max_shield
+
     def calc_repair_cost(self):
         return (1 + self.level / 10) * self.base_repair_cost
 
