@@ -30,7 +30,6 @@ class Spaceship(ABC):
         self._weapon = 0
         self._weapon_upgrade = 0
         self._engine = 0
-        self._base_shield_recharge = 0
         self._max_cargo_size = 0
         self._base_repair_cost = 0
         self._base_upgrade_cost = 0
@@ -161,14 +160,6 @@ class Spaceship(ABC):
         self._engine = value
 
     @property
-    def base_shield_recharge(self):
-        return self._base_shield_recharge
-
-    @base_shield_recharge.setter
-    def base_shield_recharge(self, value):
-        self._base_shield_recharge = value
-
-    @property
     def max_cargo_size(self):
         return self._max_cargo_size
 
@@ -257,7 +248,7 @@ class Spaceship(ABC):
             damage = 0
 
     def recharge_shield(self):
-        self.shield = min(self.shield + self.base_shield_recharge, self.max_shield)
+        self.shield = min(self.shield + int(self.max_shield / 10), self.max_shield)
 
     def recharge_shield_full(self):
         self.shield = self.max_shield
@@ -325,7 +316,6 @@ class Spaceship(ABC):
             "weapon": self.weapon,
             "weaponUpgrade": self.weapon_upgrade,
             "engine": self.engine,
-            "baseShieldRecharge": self.base_shield_recharge,
             "maxCargoSize": self.max_cargo_size,
             "baseRepairCost": self.base_repair_cost,
             "baseUpgradeCost": self.base_upgrade_cost,
