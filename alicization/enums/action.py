@@ -39,3 +39,5 @@ class Action(Enum):
     INVEST_DRYDOCK = "invest_drydock"  # 32
     BUILD_DESTROYER = "build_destroyer"  # 33
     PILOT_DESTROYER = "pilot_destroyer"  # 34
+    BUILD_EXTRACTOR = "build_extractor"  # 35
+    PILOT_EXTRACTOR = "pilot_extractor"  # 36

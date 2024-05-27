@@ -4,6 +4,16 @@ miner,hyper_dust,70
 miner,presolar_grain,180
 miner,nebulite,35
 miner,water_ice,55
+extractor,cosmic_resin,4000
+extractor,hyper_dust,3000
+extractor,presolar_grain,2500
+extractor,nebulite,2000
+extractor,water_ice,3500
+extractor,astralite,1250
+extractor,hyperspace_flux,900
+extractor,pulsar_residue,1000
+extractor,rare_earth_minerals,750
+extractor,voidium,1100
 corvette,cosmic_ice,320
 corvette,helium,360
 corvette,hyper_dust,140

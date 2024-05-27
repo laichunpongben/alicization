@@ -23,6 +23,7 @@ from .managers.spaceship_manager import SpaceshipManager
 from .managers.leaderboard import Leaderboard
 from .spaceships.explorer import Explorer
 from .spaceships.miner import Miner
+from .spaceships.extractor import Extractor
 from .spaceships.corvette import Corvette
 from .spaceships.frigate import Frigate
 from .spaceships.destroyer import Destroyer
@@ -70,6 +71,8 @@ ACTION_ENUMS = [
     Action.INVEST_DRYDOCK,
     Action.BUILD_DESTROYER,
     Action.PILOT_DESTROYER,
+    Action.BUILD_EXTRACTOR,
+    Action.PILOT_EXTRACTOR,
 ]
 ACTIONS = [action.value for action in ACTION_ENUMS]
 NUM_ATTACK_ROUND = 10
@@ -109,7 +112,7 @@ class Player:
         if self.control == Control.NEURAL_AI:
             self.learning_agent = DQNAgent(
                 actions=ACTIONS,
-                input_size=69,  # Adjust based on the state representation
+                input_size=71,  # Adjust based on the state representation
                 hidden_sizes=[128, 256, 128],  # Adjust as needed
                 output_size=len(ACTIONS),
                 batch_size=128,
@@ -313,7 +316,15 @@ class Player:
 
     def build_destroyer(self):
         blueprint_name = "destroyer"
-        if self.can_build_frigate():
+        if self.can_build_destroyer():
+            self.manufacture(blueprint_name)
+            logger.debug(f"Building {blueprint_name}")
+        else:
+            logger.warning(f"No enough materials to build {blueprint_name} spaceship!")
+
+    def build_extractor(self):
+        blueprint_name = "extractor"
+        if self.can_build_extractor():
             self.manufacture(blueprint_name)
             logger.debug(f"Building {blueprint_name}")
         else:
@@ -708,6 +719,36 @@ class Player:
                 logger.warning("No destroyer spaceship")
         else:
             logger.warning("Cannot pilot destroyer spaceship from this location.")
+
+    def pilot_extractor(self):
+        if self.can_pilot_extractor():
+            new_spaceship = None
+            for spaceship in self.hanger:
+                if isinstance(spaceship, Extractor):
+                    new_spaceship = spaceship
+                    self.hanger.remove(spaceship)
+                    break
+
+            if new_spaceship is None:
+                self.inventory["extractor"] -= 1
+                new_spaceship = Extractor()
+
+            if new_spaceship is not None:
+                for item, count in self.spaceship.cargo_hold.items():
+                    new_spaceship.cargo_hold[item] += count
+                    self.spaceship.cargo_hold[item] = 0
+
+                if not isinstance(self.spaceship, Explorer):
+                    self.hanger.append(self.spaceship)
+                self.spaceship = new_spaceship
+                self.spaceship.recharge_shield()
+                logger.info(
+                    f"{self.name} piloted a extractor spaceship at {self.current_system.name} - {self.current_location.name}"
+                )
+            else:
+                logger.warning("No extractor spaceship")
+        else:
+            logger.warning("Cannot pilot extractor spaceship from this location.")
 
     def place_bounty(self):
         if self.can_place_bounty():
@@ -1106,8 +1147,6 @@ class Player:
                     action_index_probs.append((32, 0.001))
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
-                if self.can_pilot_miner():
-                    action_index_probs.append((28, 1))
                 if self.can_repair():
                     action_index_probs.append((15, 0.1))
                 if self.can_upgrade():
@@ -1122,8 +1161,15 @@ class Player:
                     action_index_probs.append((27, 0.1))
                 if self.can_build_corvette():
                     action_index_probs.append((26, 0.01))
+                if self.can_build_extractor():
+                    action_index_probs.append((35, 0.1))
                 if self.can_build_miner():
                     action_index_probs.append((25, 0.01))
+
+                if self.can_pilot_miner() and not isinstance(self.spaceship, Extractor):
+                    action_index_probs.append((28, 1))
+                if self.can_pilot_extractor:
+                    action_index_probs.append((36, 1))
 
                 action_indexes, probs = zip(*action_index_probs)
                 return random.choices(action_indexes, weights=probs, k=1)[0]
@@ -1220,6 +1266,10 @@ class Player:
             self.build_destroyer()
         elif action == Action.PILOT_DESTROYER.value:
             self.pilot_destroyer()
+        elif action == Action.BUILD_EXTRACTOR.value:
+            self.build_extractor()
+        elif action == Action.PILOT_EXTRACTOR.value:
+            self.pilot_extractor()
         else:
             logger.error("Not matching any action!!")
         self.action_history[ACTIONS[action_index]] += 1
@@ -1513,6 +1563,23 @@ class Player:
             else 0
         )
 
+    def can_build_extractor(self):
+        return (
+            1
+            if isinstance(self.current_location, Planet)
+            and self.inventory["cosmic_resin"] >= 4000
+            and self.inventory["hyper_dust"] >= 3000
+            and self.inventory["presolar_grain"] >= 2500
+            and self.inventory["nebulite"] >= 2000
+            and self.inventory["water_ice"] >= 3500
+            and self.inventory["astralite"] >= 1250
+            and self.inventory["etherium"] >= 900
+            and self.inventory["hyperspace_flux"] >= 1000
+            and self.inventory["pulsar_residue"] >= 750
+            and self.inventory["voidium"] >= 1100
+            else 0
+        )
+
     def can_pilot_miner(self):
         return (
             1
@@ -1521,7 +1588,7 @@ class Player:
                 any(isinstance(spaceship, Miner) for spaceship in self.hanger)
                 or self.inventory["miner"] > 0
             )
-            and isinstance(self.spaceship, (Explorer, Corvette, Frigate, Destroyer))
+            and not isinstance(self.spaceship, Miner)
             else 0
         )
 
@@ -1533,31 +1600,45 @@ class Player:
                 any(isinstance(spaceship, Corvette) for spaceship in self.hanger)
                 or self.inventory["corvette"] > 0
             )
-            and isinstance(self.spaceship, (Explorer, Miner, Frigate, Destroyer))
+            and not isinstance(self.spaceship, Corvette)
             else 0
         )
 
     def can_pilot_frigate(self):
-        if isinstance(self.current_location, (Planet, Moon)):
-            has_frigate = (
+        return (
+            1
+            if isinstance(self.current_location, (Planet, Moon))
+            and (
                 any(isinstance(spaceship, Frigate) for spaceship in self.hanger)
-                or self.inventory.get("frigate", 0) > 0
+                or self.inventory["frigate"] > 0
             )
-            can_pilot = isinstance(
-                self.spaceship, (Explorer, Miner, Corvette, Destroyer)
-            )
-            return int(has_frigate and can_pilot)
-        return 0
+            and not isinstance(self.spaceship, Frigate)
+            else 0
+        )
 
     def can_pilot_destroyer(self):
-        if isinstance(self.current_location, (Planet, Moon)):
-            has_destroyer = (
+        return (
+            1
+            if isinstance(self.current_location, (Planet, Moon))
+            and (
                 any(isinstance(spaceship, Destroyer) for spaceship in self.hanger)
-                or self.inventory.get("destroyer", 0) > 0
+                or self.inventory["destroyer"] > 0
             )
-            can_pilot = isinstance(self.spaceship, (Explorer, Miner, Corvette, Frigate))
-            return int(has_destroyer and can_pilot)
-        return 0
+            and not isinstance(self.spaceship, Destroyer)
+            else 0
+        )
+
+    def can_pilot_extractor(self):
+        return (
+            1
+            if isinstance(self.current_location, (Planet, Moon))
+            and (
+                any(isinstance(spaceship, Extractor) for spaceship in self.hanger)
+                or self.inventory["extractor"] > 0
+            )
+            and not isinstance(self.spaceship, Extractor)
+            else 0
+        )
 
     def can_place_bounty(self):
         return 1 if self.wallet >= MIN_BOUNTY and self.last_killed_by is not None else 0
@@ -1707,10 +1788,12 @@ class Player:
             "can_build_corvette": self.can_build_corvette(),
             "can_build_frigate": self.can_build_frigate(),
             "can_build_destroyer": self.can_build_destroyer(),
+            "can_build_extractor": self.can_build_extractor(),
             "can_pilot_miner": self.can_pilot_miner(),
             "can_pilot_corvette": self.can_pilot_corvette(),
             "can_pilot_frigate": self.can_pilot_frigate(),
             "can_pilot_destroyer": self.can_pilot_destroyer(),
+            "can_pilot_extractor": self.can_pilot_extractor(),
             "can_place_bounty": self.can_place_bounty(),
             "spaceship": self.get_current_spaceship_type(),
             "spaceship_level": self.spaceship.level,
