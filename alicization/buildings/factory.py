@@ -69,6 +69,7 @@ class Factory(Building):
                     "miner": 1,
                     "corvette": 2,
                     "frigate": 100,
+                    "destroyer": 5000,
                 }
                 score = scores.get(blueprint_name, 0)
                 leaderboard.log_achievement(player.name, "build", score)

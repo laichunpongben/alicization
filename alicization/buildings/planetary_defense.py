@@ -14,7 +14,7 @@ leaderboard = Leaderboard()
 
 NUM_BOMBARD_ROUND = 10
 P_BOMBARD_HIT = 0.5
-DESTROY_SCORE = 1000
+DESTROY_SCORE = 10000
 
 
 class PlanetaryDefense(Building):
