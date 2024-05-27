@@ -795,8 +795,7 @@ class Player:
                 ready_to_bombard = (
                     self.can_bombard()
                     and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
-                    and self.spaceship.hull == self.spaceship.max_hull
-                    and self.spaceship.level == self.spaceship.max_level
+                    and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
                 )
 
                 if ready_to_bombard:
@@ -814,7 +813,10 @@ class Player:
                 if self.can_move_moon():
                     action_index_probs.append((3, 0.05))
                 if self.can_travel():
-                    action_index_probs.append((6, 0.01))
+                    if self.can_move_moon():
+                        action_index_probs.append((6, 0.01))
+                    else:
+                        action_index_probs.append((6, 1))
                 if self.can_mine():
                     action_index_probs.append((8, 0.2))
                 if self.can_unload():
@@ -856,8 +858,8 @@ class Player:
                 ready_to_mission = (
                     self.can_mission()
                     and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
-                    and self.spaceship.armor == self.spaceship.max_armor
-                    and self.spaceship.hull == self.spaceship.max_hull
+                    and math.isclose(self.spaceship.armor, self.spaceship.max_armor)
+                    and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
                 )
 
                 if ready_to_mission:
@@ -926,8 +928,8 @@ class Player:
                 ready_to_mission = (
                     self.can_mission()
                     and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
-                    and self.spaceship.hull == self.spaceship.max_hull
-                    and self.spaceship.armor == self.spaceship.max_armor
+                    and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
+                    and math.isclose(self.spaceship.armor, self.spaceship.max_armor)
                 )
                 if ready_to_mission:
                     action_index_probs.append((14, 1))
@@ -935,8 +937,8 @@ class Player:
                 ready_to_kill = (
                     self.can_attack()
                     and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
-                    and self.spaceship.hull == self.spaceship.max_hull
-                    and self.spaceship.armor == self.spaceship.max_armor
+                    and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
+                    and math.isclose(self.spaceship.armor, self.spaceship.max_armor)
                 )
                 if ready_to_kill:
                     action_index_probs.append((20, 1))
@@ -1000,8 +1002,8 @@ class Player:
                 ready_to_mission = (
                     self.can_mission()
                     and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
-                    and self.spaceship.armor == self.spaceship.max_armor
-                    and self.spaceship.hull == self.spaceship.max_hull
+                    and math.isclose(self.spaceship.armor, self.spaceship.max_armor)
+                    and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
                 )
                 if ready_to_mission:
                     action_index_probs.append((14, 0.01))
@@ -1033,7 +1035,7 @@ class Player:
                 should_police = (
                     self.can_attack()
                     and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
-                    and self.spaceship.hull == self.spaceship.max_hull
+                    and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
                     and killer_match
                 )
                 if should_police:
