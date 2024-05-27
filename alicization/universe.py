@@ -163,6 +163,7 @@ class Universe:
 
             for moon in system.moons:
                 moon.mission_center.respawn_missions()
+                moon.mission_center.clean_up()
 
             system.debrises = [d for d in system.debrises if not d.is_empty()]
 

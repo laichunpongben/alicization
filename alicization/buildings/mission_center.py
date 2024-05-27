@@ -18,15 +18,15 @@ logger = logging.getLogger(__name__)
 
 leaderboard = Leaderboard()
 
-MISSION_SUCCESS_BASE_DAMAGE = 40
-MISSION_FAIL_BASE_DAMAGE = 80
+MISSION_SUCCESS_BASE_DAMAGE = 50
+MISSION_FAIL_BASE_DAMAGE = 100
 
 NUM_BOMBARD_ROUND = 10
 P_BOMBARD_HIT = 0.5
 DESTROY_SCORE = 10000
 BASE_MISSION_SCORE = 10
 MAX_DAMAGE = 1e12
-NUM_MISSION = 4
+NUM_MISSION = 5
 
 
 class MissionStatus(Enum):
@@ -194,12 +194,16 @@ class MissionCenter(Building):
             )
             logger.debug(f"Missions respawned in {self.name}")
         else:
-            if mission_count > 0 and random.random() < 0.001:
+            if mission_count > 0 and random.random() < 0.01:
                 missions = self.get_available_missions()
                 mission_to_cancel = random.choice(missions)
                 mission_to_cancel.status = MissionStatus.CANCELED
                 self.load_missions_from_csv(self.missions_file, count=1)
                 logger.debug(f"Mission {mission_to_cancel} replaced in {self.name}")
+
+    def clean_up(self):
+        self.missions = [mission for mission in self.missions if mission.status == MissionStatus.OPEN]
+        logger.debug(f"Cleaned up missions in {self.name}")
 
     def reset(self):
         self._hull = self._max_hull
