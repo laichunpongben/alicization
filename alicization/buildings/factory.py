@@ -68,6 +68,7 @@ class Factory(Building):
                 scores = {
                     "miner": 1,
                     "corvette": 2,
+                    "extractor": 50,
                     "frigate": 100,
                     "destroyer": 5000,
                 }

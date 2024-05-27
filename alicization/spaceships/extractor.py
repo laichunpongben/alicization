@@ -22,7 +22,7 @@ class Extractor(Spaceship):
         self._weapon_upgrade = 0
         self._engine = 10
         self._max_cargo_size = 200000
-        self._base_repair_cost = 2500
-        self._base_upgrade_cost = 10000
+        self._base_repair_cost = 1250
+        self._base_upgrade_cost = 5000
         self._max_level = 20
         self._mining = 3
