@@ -234,6 +234,7 @@ class Player:
                 qty = random.randint(0, max_qty)
                 if not self.spaceship.is_cargo_full():
                     self.spaceship.cargo_hold[item] += qty
+                    self.current_location.storage.remove_item(self, item, qty)
             logger.info(
                 f"{self.name} loaded cargo at {self.current_system.name} - {self.current_location.name}"
             )

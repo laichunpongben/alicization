@@ -40,9 +40,6 @@ class Storage(Building):
 
         self.inventory[player.name][item] -= qty
 
-        if self.inventory[player.name][item] == 0:
-            del self.inventory[player.name][item]
-
         logger.info(f"Removed {qty} of {item} from player {player.name}'s storage.")
         return True
 
