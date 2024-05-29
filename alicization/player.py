@@ -1366,21 +1366,30 @@ class Player:
         self.learning_agent.learn()
 
     def calculate_net_worth(self):
-        net_worth = self.wallet + self.total_investment * 0.1
+        inventory_worth = self.calculate_inventory_worth()
+        net_worth = self.wallet + self.total_investment * 0.1 + inventory_worth
+        return net_worth
+
+    def calculate_inventory_worth(self):
+        inventory_worth = 0
+        material_price_cache = {}
         for system in self.universe.star_systems:
             for planet in system.planets:
-                for item, quantity in planet.storage.get_inventory(self).items():
-                    material = material_manager.get_material(item)
-                    if material:
-                        base_price_guess = material_manager.guess_base_price(
-                            material.rarity
-                        )
-                        net_worth += (
-                            base_price_guess
-                            * quantity
-                            * self.universe.global_price_index
-                        )
-        return net_worth
+                player_inventory = planet.storage.get_inventory(self)
+                for item, quantity in player_inventory.items():
+                    if item not in material_price_cache:
+                        material = material_manager.get_material(item)
+                        if material:
+                            base_price_guess = material_manager.guess_base_price(
+                                material.rarity
+                            )
+                            material_price_cache[item] = (
+                                base_price_guess * self.universe.global_price_index
+                            )
+                        else:
+                            material_price_cache[item] = 0
+                    inventory_worth += material_price_cache[item] * quantity
+        return inventory_worth
 
     def calculate_roi(self):
         if self.total_investment > 0:
