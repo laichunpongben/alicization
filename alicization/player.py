@@ -412,29 +412,29 @@ class Player:
 
     def easy_mission(self):
         if self.current_location.has_mission_center():
-            mission_ = self.current_location.mission_center.apply_mission_easiet()
-            if mission_:
-                result = self.current_location.mission_center.do_mission(self, mission_)
+            mission = self.current_location.mission_center.apply_mission_easiet()
+            if mission:
+                result = self.current_location.mission_center.do_mission(self, mission)
                 if result > 0:
                     logger.debug(
-                        f"{self.name} completed mission {mission_.description} at {self.current_system.name} - {self.current_location.name}"
+                        f"{self.name} completed mission {mission.description} at {self.current_system.name} - {self.current_location.name}"
                     )
                 else:
-                    logger.debug(f"{self.name} failed mission {mission_.description}")
+                    logger.debug(f"{self.name} failed mission {mission.description}")
         else:
             logger.warning("Cannot do mission from this location.")
 
     def difficult_mission(self):
         if self.current_location.has_mission_center():
-            mission_ = self.current_location.mission_center.apply_mission_hardest()
-            if mission_:
-                result = self.current_location.mission_center.do_mission(self, mission_)
+            mission = self.current_location.mission_center.apply_mission_hardest()
+            if mission:
+                result = self.current_location.mission_center.do_mission(self, mission)
                 if result > 0:
                     logger.debug(
-                        f"{self.name} completed mission {mission_.description} at {self.current_system.name} - {self.current_location.name}"
+                        f"{self.name} completed mission {mission.description} at {self.current_system.name} - {self.current_location.name}"
                     )
                 else:
-                    logger.debug(f"{self.name} failed mission {mission_.description}")
+                    logger.debug(f"{self.name} failed mission {mission.description}")
         else:
             logger.warning("Cannot do mission from this location.")
 
@@ -1375,8 +1375,8 @@ class Player:
         material_price_cache = {}
         for system in self.universe.star_systems:
             for planet in system.planets:
-                player_inventory = planet.storage.get_inventory(self)
-                for item, quantity in player_inventory.items():
+                inventory = planet.storage.get_inventory(self)
+                for item, quantity in inventory.items():
                     if item not in material_price_cache:
                         material = material_manager.get_material(item)
                         if material:
