@@ -15,10 +15,6 @@ material_manager = MaterialManager()
 spaceship_manager = SpaceshipManager()
 leaderboard = Leaderboard()
 
-NUM_BOMBARD_ROUND = 10
-P_BOMBARD_HIT = 0.5
-DESTROY_SCORE = 10000
-
 
 class Marketplace(Building):
     def __init__(self):
@@ -101,9 +97,7 @@ class Marketplace(Building):
 
                 if player.wallet >= step_cost:
                     player.spend(step_cost)
-                    player.inventory[item_type] = (
-                        player.inventory.get(item_type, 0) + current_step
-                    )
+                    player.current_location.storage.add_item(player, item_type, current_step)
                     item["quantity"] -= current_step
                     total_cost += step_cost
                     quantity -= current_step
@@ -123,14 +117,14 @@ class Marketplace(Building):
             total_income = 0
             step = 10
 
-            while quantity > 0 and player.inventory.get(item_type, 0) > 0:
+            while quantity > 0 and player.current_location.storage.get_item(player, item_type) > 0:
                 current_step = min(step, quantity)
-                current_step = min(current_step, player.inventory[item_type])
+                current_step = min(current_step, player.current_location.storage.get_item(player, item_type))
                 unit_price = item["price"]
                 step_income = unit_price * current_step
 
                 player.wallet += step_income
-                player.inventory[item_type] -= current_step
+                player.current_location.storage.remove_item(player, item_type, current_step)
                 item["quantity"] += current_step
                 total_income += step_income
                 quantity -= current_step

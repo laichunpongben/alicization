@@ -8,6 +8,8 @@ import numpy as np
 
 from .location import Location
 from .mineable import Mineable
+from ..buildings.hangar import Hangar
+from ..buildings.storage import Storage
 from ..buildings.marketplace import Marketplace
 from ..buildings.factory import Factory
 from ..buildings.drydock import Drydock
@@ -31,12 +33,14 @@ class Planet(Location, Mineable):
         Location.__init__(self)
         Mineable.__init__(self)
         self.name = name
+        self.hangar = Hangar()
+        self.storage = Storage()
         self.drydock = Drydock()
         self.marketplace = Marketplace()
         self.factory = Factory()
         self.defense = PlanetaryDefense()
         self.resources = self.load_initial_resources()
-        self._buildings = [self.drydock, self.marketplace, self.factory, self.defense]
+        self._buildings = [self.hangar, self.drydock, self.marketplace, self.factory, self.defense]
 
     def load_initial_resources(self):
         resources = {}
@@ -105,14 +109,6 @@ class Planet(Location, Mineable):
 
     def get_resources(self):
         return self.resources
-
-    def add_player(self, player):
-        self.players.append(player)
-        player.current_location = self
-
-    def remove_player(self, player):
-        self.players.remove(player)
-        player.current_location = None
 
     def debug_print(self):
         logger.info(f"Planet: {self.name}")

@@ -50,18 +50,18 @@ class Factory(Building):
 
         missing_materials = []
         for material, qty in blueprint.components.items():
-            if player.inventory.get(material, 0) < qty:
+            if player.current_location.storage.get_item(player, material) < qty:
                 missing_materials.append((material, qty))
 
         if player.wallet >= job_cost and not missing_materials:
             for material, qty in blueprint.components.items():
-                player.inventory[material] -= qty
+                player.current_location.storage.remove_item(player, material, qty)
 
             player.spend(job_cost)
             self._distribute_earnings(job_cost)
 
             if self.job_success():
-                player.inventory[blueprint_name] += 1
+                player.current_location.storage.add_item(player, blueprint_name, 1)
                 player.build += 1
                 player.universe.total_build += 1
 

@@ -40,16 +40,6 @@ class Stargate(Location):
                     return stargate
         return None
 
-    def add_player(self, player):
-        self.players.append(player)
-        player.current_location = self
-        logger.info(f"Player {player} added to {self.name}.")
-
-    def remove_player(self, player):
-        self.players.remove(player)
-        player.current_location = None
-        logger.info(f"Player {player} removed from {self.name}.")
-
     @property
     def name(self):
         return str(self)

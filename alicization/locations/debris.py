@@ -56,14 +56,6 @@ class Debris(Location):
     def __str__(self):
         return f"Debris {uuid.uuid4().hex}"
 
-    def add_player(self, player):
-        self.players.append(player)
-        player.current_location = self
-
-    def remove_player(self, player):
-        self.players.remove(player)
-        player.current_location = None
-
     def debug_print(self):
         logger.info(f"Debris: {self.name}")
         logger.info(f"Resources: {self.resources}")

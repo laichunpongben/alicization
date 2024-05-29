@@ -8,6 +8,7 @@ import numpy as np
 
 from .location import Location
 from .mineable import Mineable
+from ..buildings.hangar import Hangar
 from ..buildings.drydock import Drydock
 from ..buildings.mission_center import MissionCenter
 from ..managers.material_manager import MaterialManager
@@ -25,9 +26,10 @@ class Moon(Location, Mineable):
         Mineable.__init__(self)
         self.name = name
         self.resources = self.load_initial_resources()
+        self.hangar = Hangar()
         self.drydock = Drydock()
         self.mission_center = MissionCenter()
-        self._buildings = [self.drydock, self.mission_center]
+        self._buildings = [self.hangar, self.drydock, self.mission_center]
 
     def load_initial_resources(self):
         resources = {}
@@ -83,14 +85,6 @@ class Moon(Location, Mineable):
 
     def get_resources(self):
         return self.resources
-
-    def add_player(self, player):
-        self.players.append(player)
-        player.current_location = self
-
-    def remove_player(self, player):
-        self.players.remove(player)
-        player.current_location = None
 
     def debug_print(self):
         logger.info(f"Moon: {self.name}")
