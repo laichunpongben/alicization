@@ -1210,8 +1210,11 @@ class Player:
                 if self.can_upgrade():
                     action_index_probs.append((16, 0.03))
 
-                if self.can_unload() and self.spaceship.is_cargo_full():
-                    action_index_probs.append((9, 1))
+                if self.can_unload():
+                    if self.spaceship.is_cargo_full():
+                        action_index_probs.append((9, 1))
+                    else:
+                        action_index_probs.append((9, 0.01))
                 if self.can_load():
                     action_index_probs.append((39, 0.01))
 
