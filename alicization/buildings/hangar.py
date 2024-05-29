@@ -17,7 +17,7 @@ class Hangar(Building):
     def add_spaceship(self, player, spaceship):
         if player.name not in self.spaceships:
             self.spaceships[player.name] = []
-        else:        
+        else:
             self.spaceships[player.name].append(spaceship)
 
         logger.info(f"Added spaceship to player {player.name}'s hangar.")
@@ -28,8 +28,10 @@ class Hangar(Building):
         else:
             for spaceship in self.spaceships[player.name]:
                 if spaceship.ship_class == ship_class:
-                    self.spaceships.remove(spaceship)
-                    logger.info(f"Removed spaceship from player {player.name}'s hangar.")
+                    self.spaceships[player.name].remove(spaceship)
+                    logger.info(
+                        f"Removed spaceship from player {player.name}'s hangar."
+                    )
                     return spaceship
         return None
 
@@ -44,7 +46,7 @@ class Hangar(Building):
 
     def get_spaceships(self, player):
         return self.spaceships.get(player.name, [])
-    
+
     def reset(self):
         self._hull = self._max_hull
         self._cooldown = 10000

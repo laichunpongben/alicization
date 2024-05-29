@@ -161,15 +161,26 @@ class Universe:
             for belt in system.asteroid_belts:
                 belt.respawn_resources()
 
-            for moon in system.moons:
-                moon.mission_center.respawn_missions()
-                moon.mission_center.clean_up()
-
-            system.debrises = [d for d in system.debrises if not d.is_empty()]
-
             for planet in system.planets:
                 for building in planet.buildings:
                     building.repair()
+
+                for _, spaceships in planet.hangar.spaceships.items():
+                    for spaceship in spaceships:
+                        spaceship.recharge_shield()
+
+            for moon in system.moons:
+                for building in moon.buildings:
+                    building.repair()
+
+                moon.mission_center.respawn_missions()
+                moon.mission_center.clean_up()
+
+                for _, spaceships in moon.hangar.spaceships.items():
+                    for spaceship in spaceships:
+                        spaceship.recharge_shield()
+
+            system.debrises = [d for d in system.debrises if not d.is_empty()]
 
         self.global_price_index = self.calculate_global_price_index()
 

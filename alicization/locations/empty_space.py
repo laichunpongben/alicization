@@ -12,7 +12,7 @@ class EmptySpace(Location):
     def __init__(self):
         super().__init__()
         self.name = f"Empty Space {uuid.uuid4().hex}"
-        
+
     def debug_print(self):
         logger.info(f"Empty Space: {self.name}")
         logger.info(f"Players: {self.players}")

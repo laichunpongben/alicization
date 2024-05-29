@@ -17,7 +17,7 @@ class Storage(Building):
     def add_item(self, player, item, qty):
         if player.name not in self.inventory:
             self.inventory[player.name] = {}
-        
+
         if item in self.inventory[player.name]:
             self.inventory[player.name][item] += qty
         else:
@@ -27,13 +27,17 @@ class Storage(Building):
 
     def remove_item(self, player, item, qty):
         if player.name not in self.inventory or item not in self.inventory[player.name]:
-            logger.warning(f"Player {player.name} does not have {item} in their storage.")
+            logger.warning(
+                f"Player {player.name} does not have {item} in their storage."
+            )
             return False
 
         if self.inventory[player.name][item] < qty:
-            logger.warning(f"Player {player.name} does not have enough {item} to remove {qty}.")
+            logger.warning(
+                f"Player {player.name} does not have enough {item} to remove {qty}."
+            )
             return False
-        
+
         self.inventory[player.name][item] -= qty
 
         if self.inventory[player.name][item] == 0:
@@ -41,13 +45,13 @@ class Storage(Building):
 
         logger.info(f"Removed {qty} of {item} from player {player.name}'s storage.")
         return True
-    
+
     def get_item(self, player, item):
         return self.inventory.get(player.name, {}).get(item, 0)
 
     def get_inventory(self, player):
         return self.inventory.get(player.name, {})
-    
+
     def reset(self):
         self._hull = self._max_hull
         self._cooldown = 10000

@@ -104,7 +104,6 @@ class Player:
         self.home_system.add_player(self)
         self.home_system.empty_space.add_player(self)
         self.wallet = 0
-        self.hanger = []
         self.turns_until_idle = 0
         self.spaceship = Explorer()
         self.skills = defaultdict(int)
@@ -227,7 +226,10 @@ class Player:
             logger.warning("Cannot unload cargo from this location.")
 
     def buy(self, resource, quantity):
-        if self.current_location.has_marketplace() and self.current_location.has_storage():
+        if (
+            self.current_location.has_marketplace()
+            and self.current_location.has_storage()
+        ):
             if self.current_location.marketplace.buy(self, resource, quantity):
                 logger.debug(f"{self.name} bought {quantity} of {resource}")
                 return True
@@ -239,7 +241,10 @@ class Player:
             return False
 
     def buy_random_resource(self):
-        if self.current_location.has_marketplace() and self.current_location.has_storage():
+        if (
+            self.current_location.has_marketplace()
+            and self.current_location.has_storage()
+        ):
             available_resources = [
                 res
                 for res, data in self.current_location.marketplace.inventory.items()
@@ -265,7 +270,10 @@ class Player:
                 self.buy(resource, qty)
 
     def sell(self, resource, quantity):
-        if self.current_location.has_marketplace() and self.current_location.has_storage():
+        if (
+            self.current_location.has_marketplace()
+            and self.current_location.has_storage()
+        ):
             if self.current_location.marketplace.sell(self, resource, quantity):
                 logger.debug(f"{self.name} sold {quantity} of {resource}")
                 return True
@@ -277,9 +285,16 @@ class Player:
             return False
 
     def sell_random_resource(self):
-        if self.current_location.has_marketplace() and self.current_location.has_storage():
+        if (
+            self.current_location.has_marketplace()
+            and self.current_location.has_storage()
+        ):
             available_resources = [
-                (res, qty) for res, qty in self.current_location.storage.get_inventory(self).items() if qty > 0
+                (res, qty)
+                for res, qty in self.current_location.storage.get_inventory(
+                    self
+                ).items()
+                if qty > 0
             ]
             if available_resources:
                 resource, qty = random.choice(available_resources)
@@ -626,13 +641,7 @@ class Player:
 
     def pilot_miner(self):
         if self.can_pilot_miner():
-            new_spaceship = None
-            for spaceship in self.hanger:
-                if isinstance(spaceship, Miner):
-                    new_spaceship = spaceship
-                    self.hanger.remove(spaceship)
-                    break
-
+            new_spaceship = self.current_location.hangar.remove_spaceship(self, "miner")
             if new_spaceship is None:
                 self.current_location.storage.remove_item(self, "miner", 1)
                 new_spaceship = Miner()
@@ -643,7 +652,7 @@ class Player:
                     self.spaceship.cargo_hold[item] = 0
 
                 if not isinstance(self.spaceship, Explorer):
-                    self.hanger.append(self.spaceship)
+                    self.current_location.hangar.add_spaceship(self, self.spaceship)
                 self.spaceship = new_spaceship
                 self.spaceship.recharge_shield()
                 logger.info(
@@ -656,13 +665,9 @@ class Player:
 
     def pilot_corvette(self):
         if self.can_pilot_corvette():
-            new_spaceship = None
-            for spaceship in self.hanger:
-                if isinstance(spaceship, Corvette):
-                    new_spaceship = spaceship
-                    self.hanger.remove(spaceship)
-                    break
-
+            new_spaceship = self.current_location.hangar.remove_spaceship(
+                self, "corvette"
+            )
             if new_spaceship is None:
                 self.current_location.storage.remove_item(self, "corvette", 1)
                 new_spaceship = Corvette()
@@ -673,7 +678,7 @@ class Player:
                     self.spaceship.cargo_hold[item] = 0
 
                 if not isinstance(self.spaceship, Explorer):
-                    self.hanger.append(self.spaceship)
+                    self.current_location.hangar.add_spaceship(self, self.spaceship)
                 self.spaceship = new_spaceship
                 self.spaceship.recharge_shield()
                 logger.info(
@@ -686,13 +691,9 @@ class Player:
 
     def pilot_frigate(self):
         if self.can_pilot_frigate():
-            new_spaceship = None
-            for spaceship in self.hanger:
-                if isinstance(spaceship, Frigate):
-                    new_spaceship = spaceship
-                    self.hanger.remove(spaceship)
-                    break
-
+            new_spaceship = self.current_location.hangar.remove_spaceship(
+                self, "frigate"
+            )
             if new_spaceship is None:
                 self.current_location.storage.remove_item(self, "frigate", 1)
                 new_spaceship = Frigate()
@@ -703,7 +704,7 @@ class Player:
                     self.spaceship.cargo_hold[item] = 0
 
                 if not isinstance(self.spaceship, Explorer):
-                    self.hanger.append(self.spaceship)
+                    self.current_location.hangar.add_spaceship(self, self.spaceship)
                 self.spaceship = new_spaceship
                 self.spaceship.recharge_shield()
                 logger.info(
@@ -716,13 +717,9 @@ class Player:
 
     def pilot_destroyer(self):
         if self.can_pilot_destroyer():
-            new_spaceship = None
-            for spaceship in self.hanger:
-                if isinstance(spaceship, Destroyer):
-                    new_spaceship = spaceship
-                    self.hanger.remove(spaceship)
-                    break
-
+            new_spaceship = self.current_location.hangar.remove_spaceship(
+                self, "destroyer"
+            )
             if new_spaceship is None:
                 self.current_location.storage.remove_item(self, "destroyer", 1)
                 new_spaceship = Destroyer()
@@ -733,7 +730,7 @@ class Player:
                     self.spaceship.cargo_hold[item] = 0
 
                 if not isinstance(self.spaceship, Explorer):
-                    self.hanger.append(self.spaceship)
+                    self.current_location.hangar.add_spaceship(self, self.spaceship)
                 self.spaceship = new_spaceship
                 self.spaceship.recharge_shield()
                 logger.info(
@@ -746,13 +743,9 @@ class Player:
 
     def pilot_extractor(self):
         if self.can_pilot_extractor():
-            new_spaceship = None
-            for spaceship in self.hanger:
-                if isinstance(spaceship, Extractor):
-                    new_spaceship = spaceship
-                    self.hanger.remove(spaceship)
-                    break
-
+            new_spaceship = self.current_location.hangar.remove_spaceship(
+                self, "extractor"
+            )
             if new_spaceship is None:
                 self.current_location.storage.remove_item(self, "extractor", 1)
                 new_spaceship = Extractor()
@@ -763,7 +756,7 @@ class Player:
                     self.spaceship.cargo_hold[item] = 0
 
                 if not isinstance(self.spaceship, Explorer):
-                    self.hanger.append(self.spaceship)
+                    self.current_location.hangar.add_spaceship(self, self.spaceship)
                 self.spaceship = new_spaceship
                 self.spaceship.recharge_shield()
                 logger.info(
@@ -929,9 +922,11 @@ class Player:
                     if isinstance(self.spaceship, Explorer):
                         action_index_probs.append((29, 1))
                     else:
-                        if self.spaceship.is_damaged() and self.wallet <= self.spaceship.calc_repair_cost():
+                        if (
+                            self.spaceship.is_damaged()
+                            and self.wallet <= self.spaceship.calc_repair_cost()
+                        ):
                             action_index_probs.append((29, 0.1))
-                        
 
                 if self.can_pilot_frigate() and self.wallet >= 500000:
                     action_index_probs.append((30, 1))
@@ -1102,7 +1097,7 @@ class Player:
                         and self.wallet <= self.spaceship.calc_repair_cost()
                     ):
                         action_index_probs.append((29, 1))
-                        
+
                 if self.can_pilot_frigate():
                     action_index_probs.append((30, 1))
                 if self.can_pilot_destroyer():
@@ -1322,8 +1317,6 @@ class Player:
 
     def health_check(self):
         self.spaceship.recharge_shield()
-        for spaceship in self.hanger:
-            spaceship.recharge_shield()
 
     def update_stats(self):
         self.net_worth = self.calculate_net_worth()
@@ -1350,9 +1343,13 @@ class Player:
                 for item, quantity in planet.storage.get_inventory(self).items():
                     material = material_manager.get_material(item)
                     if material:
-                        base_price_guess = material_manager.guess_base_price(material.rarity)
+                        base_price_guess = material_manager.guess_base_price(
+                            material.rarity
+                        )
                         net_worth += (
-                            base_price_guess * quantity * self.universe.global_price_index
+                            base_price_guess
+                            * quantity
+                            * self.universe.global_price_index
                         )
         return net_worth
 
@@ -1427,22 +1424,25 @@ class Player:
     def can_buy(self):
         return (
             1
-            if self.current_location.has_marketplace() and self.current_location.has_storage()
+            if self.current_location.has_marketplace()
+            and self.current_location.has_storage()
             and self.wallet > 0
             and self.current_location.marketplace.inventory
             else 0
         )
 
     def can_sell(self):
-        return int(self.current_location.has_marketplace() and self.current_location.has_storage() and bool(self.current_location.storage.get_inventory(self)))
+        return int(
+            self.current_location.has_marketplace()
+            and self.current_location.has_storage()
+            and bool(self.current_location.storage.get_inventory(self))
+        )
 
     def can_invest_factory(self):
         return int(self.current_location.has_factory() and self.wallet > 0)
 
     def can_invest_drydock(self):
-        return int(
-            self.current_location.has_drydock() and self.wallet > 0
-        )
+        return int(self.current_location.has_drydock() and self.wallet > 0)
 
     def can_collect(self):
         can_collect_factory = (
@@ -1512,7 +1512,8 @@ class Player:
     def can_buy_warship(self):
         return (
             1
-            if self.current_location.has_marketplace() and self.current_location.has_storage()
+            if self.current_location.has_marketplace()
+            and self.current_location.has_storage()
             and any(
                 self.wallet
                 >= self.current_location.marketplace.inventory[spaceship]["price"]
@@ -1526,18 +1527,20 @@ class Player:
     def can_sell_warship(self):
         return (
             1
-            if self.current_location.has_marketplace() and self.current_location.has_storage()
+            if self.current_location.has_marketplace()
+            and self.current_location.has_storage()
             and any(
                 self.current_location.storage.get_item(self, spaceship) > 0
                 for spaceship in ["destroyer", "frigate", "corvette"]
             )
             else 0
         )
-    
+
     def can_buy_mining_spaceship(self):
         return (
             1
-            if self.current_location.has_marketplace() and self.current_location.has_storage()
+            if self.current_location.has_marketplace()
+            and self.current_location.has_storage()
             and any(
                 self.wallet
                 >= self.current_location.marketplace.inventory[spaceship]["price"]
@@ -1551,7 +1554,8 @@ class Player:
     def can_sell_mining_spaceship(self):
         return (
             1
-            if self.current_location.has_marketplace() and self.current_location.has_storage()
+            if self.current_location.has_marketplace()
+            and self.current_location.has_storage()
             and any(
                 self.current_location.storage.get_item(self, spaceship) > 0
                 for spaceship in ["extractor", "miner"]
@@ -1562,7 +1566,8 @@ class Player:
     def can_build_miner(self):
         return (
             1
-            if self.current_location.has_factory() and self.current_location.has_storage()
+            if self.current_location.has_factory()
+            and self.current_location.has_storage()
             and self.current_location.storage.get_item(self, "cosmic_resin") >= 160
             and self.current_location.storage.get_item(self, "hyper_dust") >= 70
             and self.current_location.storage.get_item(self, "presolar_grain") >= 180
@@ -1574,7 +1579,8 @@ class Player:
     def can_build_corvette(self):
         return (
             1
-            if self.current_location.has_factory() and self.current_location.has_storage()
+            if self.current_location.has_factory()
+            and self.current_location.has_storage()
             and self.current_location.storage.get_item(self, "cosmic_ice") >= 320
             and self.current_location.storage.get_item(self, "helium") >= 360
             and self.current_location.storage.get_item(self, "hyper_dust") >= 140
@@ -1586,7 +1592,8 @@ class Player:
     def can_build_frigate(self):
         return (
             1
-            if self.current_location.has_factory() and self.current_location.has_storage()
+            if self.current_location.has_factory()
+            and self.current_location.has_storage()
             and self.current_location.storage.get_item(self, "cosmic_dust") >= 8000
             and self.current_location.storage.get_item(self, "cosmic_ice") >= 6000
             and self.current_location.storage.get_item(self, "helium") >= 5000
@@ -1595,7 +1602,8 @@ class Player:
             and self.current_location.storage.get_item(self, "astralite") >= 2500
             and self.current_location.storage.get_item(self, "hyperspace_flux") >= 1800
             and self.current_location.storage.get_item(self, "pulsar_residue") >= 2000
-            and self.current_location.storage.get_item(self, "rare_earth_minerals") >= 1500
+            and self.current_location.storage.get_item(self, "rare_earth_minerals")
+            >= 1500
             and self.current_location.storage.get_item(self, "voidium") >= 2200
             else 0
         )
@@ -1603,20 +1611,24 @@ class Player:
     def can_build_destroyer(self):
         return (
             1
-            if self.current_location.has_factory() and self.current_location.has_storage()
+            if self.current_location.has_factory()
+            and self.current_location.has_storage()
             and self.current_location.storage.get_item(self, "cosmic_ice") >= 50000
             and self.current_location.storage.get_item(self, "presolar_grain") >= 80000
             and self.current_location.storage.get_item(self, "photon_dust") >= 100000
             and self.current_location.storage.get_item(self, "quantum_foam") >= 120000
             and self.current_location.storage.get_item(self, "solar_dust") >= 150000
-            and self.current_location.storage.get_item(self, "antigravity_dust") >= 100000
+            and self.current_location.storage.get_item(self, "antigravity_dust")
+            >= 100000
             and self.current_location.storage.get_item(self, "etherium") >= 120000
             and self.current_location.storage.get_item(self, "hyperspace_flux") >= 50000
             and self.current_location.storage.get_item(self, "nullmetal") >= 150000
-            and self.current_location.storage.get_item(self, "rare_earth_minerals") >= 80000
+            and self.current_location.storage.get_item(self, "rare_earth_minerals")
+            >= 80000
             and self.current_location.storage.get_item(self, "aetherium") >= 30000
             and self.current_location.storage.get_item(self, "chronomite") >= 70000
-            and self.current_location.storage.get_item(self, "dimensional_rift_residue") >= 40000
+            and self.current_location.storage.get_item(self, "dimensional_rift_residue")
+            >= 40000
             and self.current_location.storage.get_item(self, "warpflux") >= 60000
             and self.current_location.storage.get_item(self, "xylothium") >= 50000
             else 0
@@ -1625,7 +1637,8 @@ class Player:
     def can_build_extractor(self):
         return (
             1
-            if self.current_location.has_factory() and self.current_location.has_storage()
+            if self.current_location.has_factory()
+            and self.current_location.has_storage()
             and self.current_location.storage.get_item(self, "cosmic_resin") >= 4000
             and self.current_location.storage.get_item(self, "hyper_dust") >= 3000
             and self.current_location.storage.get_item(self, "presolar_grain") >= 2500
@@ -1642,14 +1655,23 @@ class Player:
     def can_pilot(self, ship_class):
         return (
             1
-            if ((self.current_location.has_hangar() and self.current_location.hangar.has_spaceship(self, ship_class)) or (self.current_location.has_storage() and self.current_location.storage.get_item(self, ship_class) > 0))
+            if (
+                (
+                    self.current_location.has_hangar()
+                    and self.current_location.hangar.has_spaceship(self, ship_class)
+                )
+                or (
+                    self.current_location.has_storage()
+                    and self.current_location.storage.get_item(self, ship_class) > 0
+                )
+            )
             and self.spaceship.ship_class != ship_class
             else 0
         )
 
     def can_pilot_miner(self):
         return self.can_pilot("miner")
-    
+
     def can_pilot_extractor(self):
         return self.can_pilot("extractor")
 

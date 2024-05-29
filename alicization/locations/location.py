@@ -49,19 +49,43 @@ class Location(ABC):
         logger.debug(f"Player {player} removed from {self.name}.")
 
     def has_hangar(self):
-        return hasattr(self, "hangar") and isinstance(self.hangar, Hangar) and self.hangar.cooldown <= 0
-    
+        return (
+            hasattr(self, "hangar")
+            and isinstance(self.hangar, Hangar)
+            and self.hangar.cooldown <= 0
+        )
+
     def has_drydock(self):
-        return hasattr(self, "drydock") and isinstance(self.drydock, Drydock) and self.drydock.cooldown <= 0
-    
+        return (
+            hasattr(self, "drydock")
+            and isinstance(self.drydock, Drydock)
+            and self.drydock.cooldown <= 0
+        )
+
     def has_storage(self):
-        return hasattr(self, "storage") and isinstance(self.storage, Storage) and self.storage.cooldown <= 0
-    
+        return (
+            hasattr(self, "storage")
+            and isinstance(self.storage, Storage)
+            and self.storage.cooldown <= 0
+        )
+
     def has_marketplace(self):
-        return hasattr(self, "marketplace") and isinstance(self.marketplace, Marketplace) and self.marketplace.cooldown <= 0
-    
+        return (
+            hasattr(self, "marketplace")
+            and isinstance(self.marketplace, Marketplace)
+            and self.marketplace.cooldown <= 0
+        )
+
     def has_mission_center(self):
-        return hasattr(self, "mission_center") and isinstance(self.mission_center, MissionCenter) and self.mission_center.cooldown <= 0
-    
+        return (
+            hasattr(self, "mission_center")
+            and isinstance(self.mission_center, MissionCenter)
+            and self.mission_center.cooldown <= 0
+        )
+
     def has_factory(self):
-        return hasattr(self, "factory") and isinstance(self.factory, Factory) and self.factory.cooldown <= 0
+        return (
+            hasattr(self, "factory")
+            and isinstance(self.factory, Factory)
+            and self.factory.cooldown <= 0
+        )

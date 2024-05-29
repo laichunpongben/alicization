@@ -202,7 +202,9 @@ class MissionCenter(Building):
                 logger.debug(f"Mission {mission_to_cancel} replaced in {self.name}")
 
     def clean_up(self):
-        self.missions = [mission for mission in self.missions if mission.status == MissionStatus.OPEN]
+        self.missions = [
+            mission for mission in self.missions if mission.status == MissionStatus.OPEN
+        ]
         logger.debug(f"Cleaned up missions in {self.name}")
 
     def reset(self):

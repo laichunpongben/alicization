@@ -40,7 +40,13 @@ class Planet(Location, Mineable):
         self.factory = Factory()
         self.defense = PlanetaryDefense()
         self.resources = self.load_initial_resources()
-        self._buildings = [self.hangar, self.drydock, self.marketplace, self.factory, self.defense]
+        self._buildings = [
+            self.hangar,
+            self.drydock,
+            self.marketplace,
+            self.factory,
+            self.defense,
+        ]
 
     def load_initial_resources(self):
         resources = {}
