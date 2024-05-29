@@ -76,6 +76,7 @@ ACTION_ENUMS = [
     Action.PILOT_EXTRACTOR,
     Action.BUY_MINING_SPACESHIP,
     Action.SELL_MINING_SPACESHIP,
+    Action.LOAD,
 ]
 ACTIONS = [action.value for action in ACTION_ENUMS]
 NUM_ATTACK_ROUND = 10
@@ -215,7 +216,7 @@ class Player:
             logger.warning("Cannot mine from this location.")
 
     def unload(self):
-        if self.current_location.has_storage():
+        if self.can_unload():
             for item, qty in self.spaceship.cargo_hold.items():
                 self.current_location.storage.add_item(self, item, qty)
             self.spaceship.cargo_hold = defaultdict(int)
@@ -224,6 +225,20 @@ class Player:
             )
         else:
             logger.warning("Cannot unload cargo from this location.")
+
+    def load(self):
+        if self.can_load():
+            for item, max_qty in self.current_location.storage.get_inventory(
+                self
+            ).items():
+                qty = random.randint(0, max_qty)
+                if not self.spaceship.is_cargo_full():
+                    self.spaceship.cargo_hold[item] += qty
+            logger.info(
+                f"{self.name} loaded cargo at {self.current_system.name} - {self.current_location.name}"
+            )
+        else:
+            logger.warning("Cannot load cargo from this location.")
 
     def buy(self, resource, quantity):
         if (
@@ -903,6 +918,8 @@ class Player:
                         action_index_probs.append((6, 1))
                 if self.can_unload():
                     action_index_probs.append((9, 0.01))
+                if self.can_load():
+                    action_index_probs.append((39, 0.001))
                 if self.can_sell():
                     action_index_probs.append((11, 0.01))
                 if self.can_buy_warship():
@@ -970,6 +987,8 @@ class Player:
                     action_index_probs.append((17, 0.10))
                 if self.can_unload():
                     action_index_probs.append((9, 0.01))
+                if self.can_load():
+                    action_index_probs.append((39, 0.001))
                 if self.can_sell():
                     action_index_probs.append((11, 0.01))
                 if self.can_buy_warship():
@@ -1059,6 +1078,8 @@ class Player:
                     action_index_probs.append((17, 0.10))
                 if self.can_unload():
                     action_index_probs.append((9, 0.01))
+                if self.can_load():
+                    action_index_probs.append((39, 0.001))
                 if self.can_sell():
                     action_index_probs.append((11, 0.01))
                 if self.can_buy_warship():
@@ -1191,6 +1212,8 @@ class Player:
 
                 if self.can_unload() and self.spaceship.is_cargo_full():
                     action_index_probs.append((9, 1))
+                if self.can_load():
+                    action_index_probs.append((39, 0.01))
 
                 if self.can_build_destroyer():
                     action_index_probs.append((33, 1))
@@ -1311,6 +1334,8 @@ class Player:
             self.buy_mining_spaceship()
         elif action == Action.SELL_MINING_SPACESHIP.value:
             self.sell_mining_spaceship()
+        elif action == Action.LOAD.value:
+            self.load()
         else:
             logger.error("Not matching any action!!")
         self.action_history[ACTIONS[action_index]] += 1
@@ -1400,11 +1425,15 @@ class Player:
         return int(isinstance(self.current_location, (Planet, Moon, AsteroidBelt)))
 
     def can_unload(self):
-        return (
-            1
-            if self.current_location.has_storage()
-            and not self.spaceship.is_cargo_empty()
-            else 0
+        return int(
+            self.current_location.has_storage() and not self.spaceship.is_cargo_empty()
+        )
+
+    def can_load(self):
+        return int(
+            self.current_location.has_storage()
+            and bool(self.current_location.storage.get_inventory(self))
+            and not self.spaceship.is_cargo_full()
         )
 
     def can_mine(self):
