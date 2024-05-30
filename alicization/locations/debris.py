@@ -50,12 +50,8 @@ class Debris(Location):
     def is_empty(self):
         return not self.resources
 
-    @property
-    def name(self):
-        return str(self)
-
     def __str__(self):
-        return f"Debris {uuid.uuid4().hex}"
+        return self.name
 
     def debug_print(self):
         logger.info(f"Debris: {self.name}")
