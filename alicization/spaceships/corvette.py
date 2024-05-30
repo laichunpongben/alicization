@@ -21,6 +21,7 @@ class Corvette(Spaceship):
         self._weapon = 50
         self._weapon_upgrade = 5
         self._engine = 10
+        self._evasion = 0.1
         self._max_cargo_size = 20000
         self._base_repair_cost = 200
         self._base_upgrade_cost = 400

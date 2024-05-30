@@ -21,6 +21,7 @@ class Destroyer(Spaceship):
         self._weapon = 1800
         self._weapon_upgrade = 180
         self._engine = 3600
+        self._evasion = 0.025
         self._max_cargo_size = 80000
         self._base_repair_cost = 125000
         self._base_upgrade_cost = 1000000

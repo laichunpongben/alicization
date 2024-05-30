@@ -21,6 +21,7 @@ class SpaceshipInfo:
     weapon: int
     weapon_upgrade: int
     engine: int
+    evasion: float
     max_cargo_size: int
     base_repair_cost: int
     base_upgrade_cost: int
@@ -60,6 +61,7 @@ class SpaceshipManager:
                         weapon=int(row["weapon"]),
                         weapon_upgrade=int(row["weapon_upgrade"]),
                         engine=int(row["engine"]),
+                        evasion=float(row["evasion"]),
                         max_cargo_size=int(row["max_cargo_size"]),
                         base_repair_cost=int(row["base_repair_cost"]),
                         base_upgrade_cost=int(row["base_upgrade_cost"]),

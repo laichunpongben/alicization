@@ -21,6 +21,7 @@ class Explorer(Spaceship):
         self._weapon = 0
         self._weapon_upgrade = 0
         self._engine = 10
+        self._evasion = 0
         self._max_cargo_size = 10000
         self._base_repair_cost = 10
         self._base_upgrade_cost = 0

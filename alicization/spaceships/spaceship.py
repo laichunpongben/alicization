@@ -30,6 +30,7 @@ class Spaceship(ABC):
         self._weapon = 0
         self._weapon_upgrade = 0
         self._engine = 0
+        self._evasion = 0
         self._max_cargo_size = 0
         self._base_repair_cost = 0
         self._base_upgrade_cost = 0
@@ -122,6 +123,10 @@ class Spaceship(ABC):
     @engine.setter
     def engine(self, value):
         self._engine = value
+
+    @property
+    def evasion(self):
+        return self._evasion
 
     @property
     def max_cargo_size(self):

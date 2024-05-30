@@ -30,6 +30,7 @@ from .spaceships.extractor import Extractor
 from .spaceships.corvette import Corvette
 from .spaceships.frigate import Frigate
 from .spaceships.destroyer import Destroyer
+from .spaceships.courier import Courier
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ ACTION_ENUMS = [
     Action.ATTACK_WEAKEST,
     Action.BOMBARD,
     Action.SET_HOME,
-    Action.BUY_WARSHIP,
+    Action.BUY_CORVETTE,
     Action.SELL_CORVETTE,
     Action.BUILD_MINER,
     Action.BUILD_CORVETTE,
@@ -78,13 +79,20 @@ ACTION_ENUMS = [
     Action.PILOT_DESTROYER,
     Action.BUILD_EXTRACTOR,
     Action.PILOT_EXTRACTOR,
-    Action.BUY_MINING_SPACESHIP,
+    Action.BUY_MINER,
     Action.SELL_MINER,
     Action.LOAD,
     Action.INVEST_MARKETPLACE,
     Action.SELL_FRIGATE,
     Action.SELL_DESTROYER,
     Action.SELL_EXTRACTOR,
+    Action.BUILD_COURIER,
+    Action.BUY_COURIER,
+    Action.SELL_COURIER,
+    Action.PILOT_COURIER,
+    Action.BUY_FRIGATE,
+    Action.BUY_DESTROYER,
+    Action.BUY_EXTRACTOR,
 ]
 ACTIONS = [action.value for action in ACTION_ENUMS]
 NUM_ATTACK_ROUND = 10
@@ -423,6 +431,14 @@ class Player:
         else:
             logger.warning(f"No enough materials to build {blueprint_name} spaceship!")
 
+    def build_courier(self):
+        blueprint_name = "courier"
+        if self.can_build_courier():
+            self.manufacture(blueprint_name)
+            logger.debug(f"Building {blueprint_name}")
+        else:
+            logger.warning(f"No enough materials to build {blueprint_name} spaceship!")
+
     def invest_factory(self, amount):
         if self.current_location.has_factory():
             if self.wallet >= amount:
@@ -543,79 +559,89 @@ class Player:
             logger.warning("Cannot upgrade spaceship from this location.")
 
     def attack(self, target_player):
-        damage = (
-            np.random.binomial(
-                NUM_ATTACK_ROUND,
-                max(P_ATTACK_HIT * (1 + self.spaceship.level * 0.01), 1),
-            )
-            * self.spaceship.weapon
-        )
-        self.total_damage += damage
-        self.universe.total_damage_dealt += damage
-        target_player.spaceship.take_damage(damage)
-        logger.debug(
-            f"{self.name} attacked {target_player.name} and caused {damage} damage!"
-        )
-        if target_player.spaceship.destroyed:
-            if not self.spaceship.is_cargo_full():
-                for item, qty in target_player.spaceship.cargo_hold.items():
-                    if random.random() < P_SALVAGE:
-                        self.spaceship.cargo_hold[item] += qty
-                        self.turn_production += qty
-                target_player.spaceship.cargo_hold = defaultdict(int)
-            else:
-                self.current_system.make_debris(target_player.spaceship.cargo_hold)
-
-            self.kill += 1
-            self.universe.total_kill += 1
-            leaderboard.log_achievement(self.name, "kill", 1)
-            target_player.die()
-            target_player.last_killed_by = self.name
-            leaderboard.log_achievement(target_player.name, "death", 1)
-
-            logger.warning(
-                f"{self.name} killed {target_player.name}! at {self.current_system.name} - {self.current_location.name}"
-            )
-
-            bounty = leaderboard.get_achievement_score(target_player.name, "bounty")
-            if bounty > 0:
-                self.earn(bounty)
-                leaderboard.log_achievement(
-                    target_player.name, "bounty", 0, overwrite=True
-                )
-                logger.info(f"{self.name} earned {bounty} bounty!")
-        else:
-            defensive_damage = (
+        if random.random() < target_player.spaceship.evasion:
+            damage = (
                 np.random.binomial(
-                    NUM_DEFENSE_ROUND,
-                    max(P_DEFENSE_HIT * (1 + target_player.spaceship.level * 0.01), 1),
+                    NUM_ATTACK_ROUND,
+                    max(P_ATTACK_HIT * (1 + self.spaceship.level * 0.01), 1),
                 )
-                * target_player.spaceship.weapon
+                * self.spaceship.weapon
             )
-            target_player.total_damage += defensive_damage
-            target_player.universe.total_damage_dealt += damage
-            self.spaceship.take_damage(defensive_damage)
+            self.total_damage += damage
+            self.universe.total_damage_dealt += damage
+            target_player.spaceship.take_damage(damage)
             logger.debug(
-                f"{target_player.name} returned fire at {self.name} and caused {damage} damage!"
+                f"{self.name} attacked {target_player.name} and caused {damage} damage!"
             )
-            if self.spaceship.destroyed:
-                self.current_system.make_debris(self.spaceship.cargo_hold)
+            if target_player.spaceship.destroyed:
+                if not self.spaceship.is_cargo_full():
+                    for item, qty in target_player.spaceship.cargo_hold.items():
+                        if random.random() < P_SALVAGE:
+                            self.spaceship.cargo_hold[item] += qty
+                            self.turn_production += qty
+                    target_player.spaceship.cargo_hold = defaultdict(int)
+                else:
+                    self.current_system.make_debris(target_player.spaceship.cargo_hold)
 
-                target_player.kill += 1
-                target_player.universe.total_kill += 1
-                leaderboard.log_achievement(target_player.name, "kill", 1)
-                self.die()
-                self.last_killed_by = target_player.name
-                leaderboard.log_achievement(self.name, "death", 1)
+                self.kill += 1
+                self.universe.total_kill += 1
+                leaderboard.log_achievement(self.name, "kill", 1)
+                target_player.die()
+                target_player.last_killed_by = self.name
+                leaderboard.log_achievement(target_player.name, "death", 1)
+
                 logger.warning(
-                    f"{target_player.name} killed {self.name}! at {self.current_system.name} - {self.current_location.name}"
+                    f"{self.name} killed {target_player.name}! at {self.current_system.name} - {self.current_location.name}!"
                 )
 
-                bounty = leaderboard.get_achievement_score(self.name, "bounty")
+                bounty = leaderboard.get_achievement_score(target_player.name, "bounty")
                 if bounty > 0:
-                    target_player.earn(bounty)
-                    leaderboard.log_achievement(self.name, "bounty", 0, overwrite=True)
-                    logger.info(f"{target_player.name} earned {bounty} bounty!")
+                    self.earn(bounty)
+                    leaderboard.log_achievement(
+                        target_player.name, "bounty", 0, overwrite=True
+                    )
+                    logger.info(f"{self.name} earned {bounty} bounty!")
+            else:
+                defensive_damage = (
+                    np.random.binomial(
+                        NUM_DEFENSE_ROUND,
+                        max(
+                            P_DEFENSE_HIT * (1 + target_player.spaceship.level * 0.01),
+                            1,
+                        ),
+                    )
+                    * target_player.spaceship.weapon
+                )
+                target_player.total_damage += defensive_damage
+                target_player.universe.total_damage_dealt += damage
+                self.spaceship.take_damage(defensive_damage)
+                logger.debug(
+                    f"{target_player.name} returned fire at {self.name} and caused {damage} damage!"
+                )
+                if self.spaceship.destroyed:
+                    self.current_system.make_debris(self.spaceship.cargo_hold)
+
+                    target_player.kill += 1
+                    target_player.universe.total_kill += 1
+                    leaderboard.log_achievement(target_player.name, "kill", 1)
+                    self.die()
+                    self.last_killed_by = target_player.name
+                    leaderboard.log_achievement(self.name, "death", 1)
+                    logger.warning(
+                        f"{target_player.name} killed {self.name} at {self.current_system.name} - {self.current_location.name}!"
+                    )
+
+                    bounty = leaderboard.get_achievement_score(self.name, "bounty")
+                    if bounty > 0:
+                        target_player.earn(bounty)
+                        leaderboard.log_achievement(
+                            self.name, "bounty", 0, overwrite=True
+                        )
+                        logger.info(f"{target_player.name} earned {bounty} bounty!")
+        else:
+            logger.info(
+                f"{target_player.name} escaped an attack at {self.current_system.name} - {self.current_location.name}!"
+            )
 
     def attack_random_player(self):
         if self.spaceship.weapon > 0:
@@ -689,16 +715,14 @@ class Player:
         else:
             logger.warning("Cannot set home from this location.")
 
-    def buy_warship(self):
-        if self.can_buy_warship():
-            spaceship_class = random.choices(
-                ["destroyer", "frigate", "corvette"], weights=[0.001, 0.499, 0.5], k=1
-            )[0]
+    def buy_spaceship(self, spaceship_class):
+        if self.can_buy_spaceship(spaceship_class):
             spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
             if spaceship_info:
                 base_price = spaceship_info.base_price
             else:
                 base_price = DEFAULT_SPACESHIP_COST
+
             margin = self.random_bid_margin()
             bid_price = max(
                 round(base_price * self.affordability * (1 + margin), 4),
@@ -709,30 +733,12 @@ class Player:
                 logger.info(
                     f"{self.name} bought a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
                 )
+            else:
+                logger.warning(f"Not enough money to buy spaceship {spaceship_class}")
         else:
-            logger.warning("Cannot buy warship from this location.")
-
-    def buy_mining_spaceship(self):
-        if self.can_buy_mining_spaceship():
-            for spaceship_class in ["extractor", "miner"]:
-                spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
-                if spaceship_info:
-                    base_price = spaceship_info.base_price
-                else:
-                    base_price = DEFAULT_SPACESHIP_COST
-                margin = self.random_bid_margin()
-                bid_price = max(
-                    round(base_price * self.affordability * (1 + margin), 4),
-                    MIN_UNIT_PRICE,
-                )
-
-                if self.wallet >= bid_price and self.buy(spaceship_class, 1, bid_price):
-                    logger.info(
-                        f"{self.name} bought a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
-                    )
-                    break
-        else:
-            logger.warning("Cannot buy mining ship from this location.")
+            logger.warning(
+                f"Cannot buy spaceship {spaceship_class} from this location."
+            )
 
     def sell_spaceship(self, spaceship_class):
         if self.can_sell_spaceship(spaceship_class):
@@ -889,6 +895,32 @@ class Player:
         else:
             logger.warning("Cannot pilot extractor spaceship from this location.")
 
+    def pilot_courier(self):
+        if self.can_pilot_courier():
+            new_spaceship = self.current_location.hangar.remove_spaceship(
+                self, "courier"
+            )
+            if new_spaceship is None:
+                self.current_location.storage.remove_item(self.name, "courier", 1)
+                new_spaceship = Courier()
+
+            if new_spaceship is not None:
+                for item, count in self.spaceship.cargo_hold.items():
+                    new_spaceship.cargo_hold[item] += count
+                    self.spaceship.cargo_hold[item] = 0
+
+                if not isinstance(self.spaceship, Explorer):
+                    self.current_location.hangar.add_spaceship(self, self.spaceship)
+                self.spaceship = new_spaceship
+                self.spaceship.recharge_shield()
+                logger.info(
+                    f"{self.name} piloted a extractor spaceship at {self.current_system.name} - {self.current_location.name}"
+                )
+            else:
+                logger.warning("No extractor spaceship")
+        else:
+            logger.warning("Cannot pilot extractor spaceship from this location.")
+
     def place_bounty(self):
         if self.can_place_bounty():
             spend_factor = 0.01
@@ -967,55 +999,6 @@ class Player:
     def choose_action_index_symbolic_ai(self):
         if self.turns_until_idle <= 0:
             # Choose action using rules
-            if self.goal == Goal.MAX_DESTROY:
-                action_index_probs = []
-                if self.can_repair():
-                    action_index_probs.append((15, 0.1))
-                if self.can_upgrade():
-                    action_index_probs.append((16, 0.03))
-                if self.can_move_planet():
-                    action_index_probs.append((1, 0.05))
-                if self.can_travel():
-                    action_index_probs.append((6, 0.001))
-                if self.can_mine():
-                    action_index_probs.append((8, 0.2))
-                if self.can_unload():
-                    action_index_probs.append((9, 0.01))
-                if self.can_sell():
-                    action_index_probs.append((11, 0.01))
-                if self.can_buy_warship():
-                    action_index_probs.append((23, 0.01))
-                if self.can_invest_factory():
-                    action_index_probs.append((12, 0.001))
-                if self.can_invest_drydock():
-                    action_index_probs.append((32, 0.001))
-                if self.can_invest_marketplace():
-                    action_index_probs.append((40, 0.001))
-                if self.can_collect():
-                    action_index_probs.append((13, 0.001))
-
-                if self.can_pilot_corvette():
-                    if (isinstance(self.spaceship, (Explorer, Miner))) or (
-                        isinstance(self.spaceship, (Frigate, Destroyer))
-                        and self.spaceship.is_damaged()
-                        and self.wallet <= self.spaceship.calc_repair_cost()
-                    ):
-                        action_index_probs.append((29, 1))
-                if self.can_pilot_frigate():
-                    action_index_probs.append((30, 1))
-                if self.can_pilot_destroyer():
-                    action_index_probs.append((34, 1))
-
-                ready_to_bombard = (
-                    self.can_bombard()
-                    and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
-                    and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
-                )
-
-                if ready_to_bombard:
-                    action_index_probs.append((21, 1))
-                action_indexes, probs = zip(*action_index_probs)
-                return random.choices(action_indexes, weights=probs, k=1)[0]
             if self.goal == Goal.MAX_MISSION:
                 action_index_probs = []
                 if self.can_repair():
@@ -1039,8 +1022,6 @@ class Player:
                     action_index_probs.append((39, 0.001))
                 if self.can_sell():
                     action_index_probs.append((11, 0.2))
-                if self.can_buy_warship():
-                    action_index_probs.append((23, 0.2))
                 if self.can_set_home():
                     action_index_probs.append((22, 0.001))
                 if self.can_invest_factory():
@@ -1053,6 +1034,13 @@ class Player:
                     action_index_probs.append((13, 0.01))
                 if self.can_set_home():
                     action_index_probs.append((22, 0.0005))
+
+                if self.can_buy_spaceship("destroyer"):
+                    action_index_probs.append((49, 0.2))
+                elif self.can_buy_spaceship("frigate"):
+                    action_index_probs.append((48, 0.2))
+                elif self.can_buy_spaceship("corvette"):
+                    action_index_probs.append((23, 0.2))
 
                 if self.can_pilot_corvette():
                     if isinstance(self.spaceship, Explorer):
@@ -1116,10 +1104,6 @@ class Player:
                     action_index_probs.append((39, 0.001))
                 if self.can_sell():
                     action_index_probs.append((11, 0.4))
-                if self.can_buy_warship():
-                    action_index_probs.append((23, 0.2))
-                if self.can_buy_mining_spaceship():
-                    action_index_probs.append((37, 0.0001))
                 if self.can_set_home():
                     action_index_probs.append((22, 0.0005))
                 if self.can_invest_factory():
@@ -1130,6 +1114,18 @@ class Player:
                     action_index_probs.append((40, 0.001))
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
+
+                if self.can_buy_spaceship("destroyer"):
+                    action_index_probs.append((49, 0.2))
+                elif self.can_buy_spaceship("frigate"):
+                    action_index_probs.append((48, 0.2))
+                elif self.can_buy_spaceship("corvette"):
+                    action_index_probs.append((23, 0.2))
+
+                if self.can_buy_spaceship("extractor"):
+                    action_index_probs.append((50, 0.0001))
+                elif self.can_buy_spaceship("miner"):
+                    action_index_probs.append((37, 0.0001))
 
                 if self.can_pilot_miner() and (
                     self.wallet < 10000
@@ -1211,10 +1207,6 @@ class Player:
                     action_index_probs.append((39, 0.001))
                 if self.can_sell():
                     action_index_probs.append((11, 0.4))
-                if self.can_buy_warship():
-                    action_index_probs.append((23, 0.2))
-                if self.can_buy_mining_spaceship():
-                    action_index_probs.append((37, 0.0001))
                 if self.can_invest_factory():
                     action_index_probs.append((12, 0.001))
                 if self.can_invest_drydock():
@@ -1223,6 +1215,18 @@ class Player:
                     action_index_probs.append((40, 0.001))
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
+
+                if self.can_buy_spaceship("destroyer"):
+                    action_index_probs.append((49, 0.2))
+                elif self.can_buy_spaceship("frigate"):
+                    action_index_probs.append((48, 0.2))
+                elif self.can_buy_spaceship("corvette"):
+                    action_index_probs.append((23, 0.2))
+
+                if self.can_buy_spaceship("extractor"):
+                    action_index_probs.append((50, 0.0001))
+                elif self.can_buy_spaceship("miner"):
+                    action_index_probs.append((37, 0.0001))
 
                 if self.can_pilot_miner() and (
                     self.wallet < 10000
@@ -1322,10 +1326,6 @@ class Player:
                     action_index_probs.append((10, 0.1))
                 if self.can_sell():
                     action_index_probs.append((11, 0.1))
-                if self.can_buy_mining_spaceship() and not isinstance(
-                    self.spaceship, (Miner, Extractor)
-                ):
-                    action_index_probs.append((37, 0.02))
                 if self.can_sell_spaceship("corvette"):
                     action_index_probs.append((24, 0.2))
                 if self.can_sell_spaceship("frigate"):
@@ -1367,11 +1367,22 @@ class Player:
                     action_index_probs.append((35, 0.1))
                 if self.can_build_miner():
                     action_index_probs.append((25, 0.01))
+                if self.can_build_courier():
+                    action_index_probs.append((44, 0.01))
 
                 if self.can_pilot_miner() and not isinstance(self.spaceship, Extractor):
                     action_index_probs.append((28, 1))
                 if self.can_pilot_extractor:
                     action_index_probs.append((36, 1))
+
+                if self.can_buy_spaceship("extractor") and not isinstance(
+                    self.spaceship, Extractor
+                ):
+                    action_index_probs.append((50, 0.02))
+                elif self.can_buy_spaceship("miner") and not isinstance(
+                    self.spaceship, Miner
+                ):
+                    action_index_probs.append((37, 0.02))
 
                 if self.wallet < 10000:
                     if isinstance(self.spaceship, (Miner, Extractor)):
@@ -1450,8 +1461,8 @@ class Player:
             self.bombard_random_building()
         elif action == Action.SET_HOME.value:
             self.set_home()
-        elif action == Action.BUY_WARSHIP.value:
-            self.buy_warship()
+        elif action == Action.BUY_CORVETTE.value:
+            self.buy_spaceship("corvette")
         elif action == Action.SELL_CORVETTE.value:
             self.sell_spaceship("corvette")
         elif action == Action.BUILD_MINER.value:
@@ -1478,8 +1489,8 @@ class Player:
             self.build_extractor()
         elif action == Action.PILOT_EXTRACTOR.value:
             self.pilot_extractor()
-        elif action == Action.BUY_MINING_SPACESHIP.value:
-            self.buy_mining_spaceship()
+        elif action == Action.BUY_MINER.value:
+            self.buy_spaceship("miner")
         elif action == Action.SELL_MINER.value:
             self.sell_spaceship("miner")
         elif action == Action.LOAD.value:
@@ -1492,8 +1503,22 @@ class Player:
             self.sell_spaceship("destoyer")
         elif action == Action.SELL_EXTRACTOR.value:
             self.sell_spaceship("extractor")
+        elif action == Action.BUILD_COURIER.value:
+            self.build_courier()
+        elif action == Action.BUY_COURIER.value:
+            self.buy_spaceship("courier")
+        elif action == Action.SELL_COURIER.value:
+            self.sell_spaceship("courier")
+        elif action == Action.PILOT_COURIER.value:
+            self.pilot_courier()
+        elif action == Action.BUY_FRIGATE.value:
+            self.buy_spaceship("frigate")
+        elif action == Action.BUY_DESTROYER.value:
+            self.buy_spaceship("destoyer")
+        elif action == Action.BUY_EXTRACTOR.value:
+            self.buy_spaceship("extractor")
         else:
-            logger.error("Not matching any action!!")
+            logger.error(f"Not matching any action: {action}!!")
         self.action_history[ACTIONS[action_index]] += 1
 
     def health_check(self):
@@ -1810,12 +1835,10 @@ class Player:
             else 0
         )
 
-    def can_buy_warship(self):
-        return (
-            1
-            if self.current_location.has_marketplace()
+    def can_buy_spaceship(self, spaceship_class):
+        return int(
+            self.current_location.has_marketplace()
             and self.current_location.has_storage()
-            else 0
         )
 
     def can_sell_spaceship(self, spaceship_class):
@@ -1823,14 +1846,6 @@ class Player:
             self.current_location.has_marketplace()
             and self.current_location.has_storage()
             and self.current_location.storage.get_item(self.name, spaceship_class) > 0
-        )
-
-    def can_buy_mining_spaceship(self):
-        return (
-            1
-            if self.current_location.has_marketplace()
-            and self.current_location.has_storage()
-            else 0
         )
 
     def can_build_miner(self):
@@ -1937,6 +1952,20 @@ class Player:
             else 0
         )
 
+    def can_build_courier(self):
+        return (
+            1
+            if self.current_location.has_factory()
+            and self.current_location.has_storage()
+            and self.current_location.storage.get_item(self.name, "hyper_dust") >= 70
+            and self.current_location.storage.get_item(self.name, "nebular_energy")
+            >= 180
+            and self.current_location.storage.get_item(self.name, "nebulite") >= 35
+            and self.current_location.storage.get_item(self.name, "stellar_dust") >= 160
+            and self.current_location.storage.get_item(self.name, "water_ice") >= 55
+            else 0
+        )
+
     def can_pilot(self, ship_class):
         return (
             1
@@ -1969,6 +1998,9 @@ class Player:
 
     def can_pilot_destroyer(self):
         return self.can_pilot("destroyer")
+
+    def can_pilot_courier(self):
+        return self.can_pilot("courier")
 
     def can_place_bounty(self):
         return 1 if self.wallet >= MIN_BOUNTY and self.last_killed_by is not None else 0
@@ -2121,13 +2153,18 @@ class Player:
             "can_attack": self.can_attack(),
             "can_bombard": self.can_bombard(),
             "can_set_home": self.can_set_home(),
-            "can_buy_warship": self.can_buy_warship(),
-            "can_buy_mining_spaceship": self.can_buy_mining_spaceship(),
+            "can_buy_corvette": self.can_buy_spaceship("corvette"),
+            "can_buy_frigate": self.can_buy_spaceship("frigate"),
+            "can_buy_destroyer": self.can_buy_spaceship("destroyer"),
+            "can_buy_miner": self.can_buy_spaceship("miner"),
+            "can_buy_extractor": self.can_buy_spaceship("extractor"),
+            "can_buy_courier": self.can_buy_spaceship("courier"),
             "can_sell_corvette": self.can_sell_spaceship("corvette"),
             "can_sell_frigate": self.can_sell_spaceship("frigate"),
             "can_sell_destroyer": self.can_sell_spaceship("destroyer"),
             "can_sell_miner": self.can_sell_spaceship("miner"),
             "can_sell_extractor": self.can_sell_spaceship("extractor"),
+            "can_sell_courier": self.can_sell_spaceship("courier"),
             "can_build_miner": self.can_build_miner(),
             "can_build_corvette": self.can_build_corvette(),
             "can_build_frigate": self.can_build_frigate(),

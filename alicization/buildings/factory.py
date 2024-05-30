@@ -64,6 +64,7 @@ class Factory(Building, Investable):
 
                 scores = {
                     "miner": 1,
+                    "courier": 1,
                     "corvette": 2,
                     "extractor": 50,
                     "frigate": 100,
