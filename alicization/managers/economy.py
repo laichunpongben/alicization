@@ -3,13 +3,17 @@
 from collections import deque, defaultdict
 import logging
 
+from .time_keeper import TimeKeeper
 from .material_manager import MaterialManager
 from .spaceship_manager import SpaceshipManager
 
 logger = logging.getLogger(__name__)
 
+time_keeper = TimeKeeper()
 material_manager = MaterialManager()
 spaceship_manager = SpaceshipManager()
+
+PERIOD = 5000
 
 
 class Economy:
@@ -49,10 +53,6 @@ class Economy:
 
     def calculate_galactic_price_index(self):
         for item_type, transactions in self._transactions.items():
-            total_quantity = sum(t.quantity for t in transactions)
-            weighted_average = 0
-            deviation_total = 0
-
             material = material_manager.get_material(item_type)
             spaceship = spaceship_manager.get_spaceship(item_type)
             if material:
@@ -62,7 +62,14 @@ class Economy:
             else:
                 base_price = 1
 
-            for t in transactions:
+            recent_transactions = [
+                t for t in transactions if t.turn + PERIOD >= time_keeper.turn
+            ]
+            total_quantity = sum(t.quantity for t in recent_transactions)
+            weighted_average = 0
+            deviation_total = 0
+
+            for t in recent_transactions:
                 deviation = t.price / base_price
                 deviation_total += deviation * t.quantity
 

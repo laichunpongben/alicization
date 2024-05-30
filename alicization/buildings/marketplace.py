@@ -118,16 +118,7 @@ class Marketplace(Building, Investable):
 
     def place_ask_order(self, player, item_type, quantity, min_price, buyout_price):
         expiry = time_keeper.turn + NUM_TURN_ASK_ORDER_EXPIRY
-        cost = quantity * buyout_price
-        service_fee = (
-            cost * BASE_SERVICE_FEE_RATIO * max(1 - player.skills["trading"] * 0.001, 0)
-        )
-        if (
-            player.wallet >= service_fee
-            and player.current_location.storage.get_item(player.name, item_type)
-            >= quantity
-        ):
-            player.spend(service_fee)
+        if player.current_location.storage.get_item(player.name, item_type) >= quantity:
             player.current_location.storage.remove_item(
                 player.name, item_type, quantity
             )
@@ -143,7 +134,6 @@ class Marketplace(Building, Investable):
             )
             insort(self.ask_orders[item_type], ask_order)
             self.inventory[item_type] += 1
-            self._distribute_earnings(service_fee)
             return True
         else:
             return False
@@ -183,6 +173,13 @@ class Marketplace(Building, Investable):
         revenue = quantity * price
         seller.earn(revenue)
         self.wallet -= revenue
+        service_fee = (
+            revenue
+            * BASE_SERVICE_FEE_RATIO
+            * max(1 - seller.skills["trading"] * 0.001, 0)
+        )
+        seller.spend(service_fee)
+        self._distribute_earnings(service_fee)
 
         # refund
         buyer = player_manager.get_player(bid_order.player)

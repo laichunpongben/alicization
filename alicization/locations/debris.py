@@ -28,13 +28,13 @@ class Debris(Location):
     def salvage(self, player):
         if self.resources and not player.spaceship.is_cargo_full():
             item = random.choice(list(self.resources.keys()))
-            count = self.resources[item]
+            qty = self.resources[item]
             skill_level = player.skills["salvaging"]
             if self.salvage_success(skill_level):
-                player.spaceship.cargo_hold[item] += count
+                player.spaceship.cargo_hold[item] += qty
                 self.resources.pop(item)
                 player.salvage_completed += 1
-                player.turn_material_gain += count
+                player.turn_production += qty
                 player.skills["salvaging"] = (
                     int(math.log(player.salvage_completed) / math.log(math.sqrt(2)))
                     if player.salvage_completed > 0

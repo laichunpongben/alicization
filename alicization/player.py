@@ -65,7 +65,7 @@ ACTION_ENUMS = [
     Action.BOMBARD,
     Action.SET_HOME,
     Action.BUY_WARSHIP,
-    Action.SELL_WARSHIP,
+    Action.SELL_CORVETTE,
     Action.BUILD_MINER,
     Action.BUILD_CORVETTE,
     Action.BUILD_FRIGATE,
@@ -79,9 +79,12 @@ ACTION_ENUMS = [
     Action.BUILD_EXTRACTOR,
     Action.PILOT_EXTRACTOR,
     Action.BUY_MINING_SPACESHIP,
-    Action.SELL_MINING_SPACESHIP,
+    Action.SELL_MINER,
     Action.LOAD,
     Action.INVEST_MARKETPLACE,
+    Action.SELL_FRIGATE,
+    Action.SELL_DESTROYER,
+    Action.SELL_EXTRACTOR,
 ]
 ACTIONS = [action.value for action in ACTION_ENUMS]
 NUM_ATTACK_ROUND = 10
@@ -93,10 +96,10 @@ DEFAULT_VOLUME = 10
 P_SALVAGE = 0.95
 DEFAULT_SPACESHIP_COST = 1
 SET_HOME_COST = 1000
-MIN_BOUNTY = 1000
+MIN_BOUNTY = 100
 NUM_RESPAWN_IDLE_TURN = 10
 EARNING_MEMORY = 10000
-MATERIAL_GAIN_MEMORY = 10000
+PRODUCTION_MEMORY = 10000
 MIN_UNIT_PRICE = 0.0001
 ASK_MARGIN = 0.5
 BID_MARGIN = 0.2
@@ -158,10 +161,10 @@ class Player:
         self.long_earning_ema = None
         self.short_earning_ema = None
         self.productivity = 1
-        self.material_gain_history = deque(maxlen=MATERIAL_GAIN_MEMORY)
-        self.turn_material_gain = 0
-        self.long_material_gain_ema = None
-        self.short_material_gain_ema = None
+        self.production_history = deque(maxlen=PRODUCTION_MEMORY)
+        self.turn_production = 0
+        self.long_production_ema = None
+        self.short_production_ema = None
         self.long_period = EARNING_MEMORY
         self.short_period = int(EARNING_MEMORY * 0.5)
         self.k_long = 2 / (self.long_period + 1)
@@ -366,7 +369,7 @@ class Player:
                         round(base_price / self.productivity * (1 + margin), 4),
                         MIN_UNIT_PRICE,
                     )
-                    min_price = max(buyout_price / 2, MIN_UNIT_PRICE)
+                    min_price = max(buyout_price * 0.1, MIN_UNIT_PRICE)
                     qty_sell = random.randint(1, qty)
                     self.sell(material_name, qty_sell, min_price, buyout_price)
                 else:
@@ -558,7 +561,7 @@ class Player:
                 for item, qty in target_player.spaceship.cargo_hold.items():
                     if random.random() < P_SALVAGE:
                         self.spaceship.cargo_hold[item] += qty
-                        self.turn_material_gain += qty
+                        self.turn_production += qty
                 target_player.spaceship.cargo_hold = defaultdict(int)
             else:
                 self.current_system.make_debris(target_player.spaceship.cargo_hold)
@@ -688,48 +691,26 @@ class Player:
 
     def buy_warship(self):
         if self.can_buy_warship():
-            for spaceship_class in ["destroyer", "frigate", "corvette"]:
-                spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
-                if spaceship_info:
-                    base_price = spaceship_info.base_price
-                else:
-                    base_price = DEFAULT_SPACESHIP_COST
-                margin = self.random_bid_margin()
-                bid_price = max(
-                    round(base_price * self.affordability * (1 + margin), 4),
-                    MIN_UNIT_PRICE,
-                )
+            spaceship_class = random.choices(
+                ["destroyer", "frigate", "corvette"], weights=[0.001, 0.499, 0.5], k=1
+            )[0]
+            spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
+            if spaceship_info:
+                base_price = spaceship_info.base_price
+            else:
+                base_price = DEFAULT_SPACESHIP_COST
+            margin = self.random_bid_margin()
+            bid_price = max(
+                round(base_price * self.affordability * (1 + margin), 4),
+                MIN_UNIT_PRICE,
+            )
 
-                if self.wallet >= bid_price and self.buy(spaceship_class, 1, bid_price):
-                    logger.info(
-                        f"{self.name} bought a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
-                    )
-                    break
+            if self.wallet >= bid_price and self.buy(spaceship_class, 1, bid_price):
+                logger.info(
+                    f"{self.name} bought a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
+                )
         else:
             logger.warning("Cannot buy warship from this location.")
-
-    def sell_warship(self):
-        if self.can_sell_warship():
-            for spaceship_class in ["destroyer", "frigate", "corvette"]:
-                spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
-                if spaceship_info:
-                    base_price = spaceship_info.base_price
-                else:
-                    base_price = DEFAULT_SPACESHIP_COST
-                margin = self.random_ask_margin()
-                ask_price = max(
-                    round(base_price / self.productivity * (1 + margin), 4),
-                    MIN_UNIT_PRICE,
-                )
-                min_price = min(ask_price / 2, MIN_UNIT_PRICE)
-
-                if self.sell(spaceship_class, 1, min_price, ask_price):
-                    logger.info(
-                        f"{self.name} sold a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
-                    )
-                    break
-        else:
-            logger.warning("Cannot sell warship from this location.")
 
     def buy_mining_spaceship(self):
         if self.can_buy_mining_spaceship():
@@ -753,28 +734,26 @@ class Player:
         else:
             logger.warning("Cannot buy mining ship from this location.")
 
-    def sell_mining_spaceship(self):
-        if self.can_sell_mining_spaceship():
-            for spaceship_class in ["extractor", "miner"]:
-                spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
-                if spaceship_info:
-                    base_price = spaceship_info.base_price
-                else:
-                    base_price = DEFAULT_SPACESHIP_COST
-                margin = self.random_ask_margin()
-                ask_price = max(
-                    round(base_price / self.productivity * (1 + margin), 4),
-                    MIN_UNIT_PRICE,
-                )
-                min_price = min(ask_price / 2, MIN_UNIT_PRICE)
+    def sell_spaceship(self, spaceship_class):
+        if self.can_sell_spaceship(spaceship_class):
+            spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
+            if spaceship_info:
+                base_price = spaceship_info.base_price
+            else:
+                base_price = DEFAULT_SPACESHIP_COST
+            margin = self.random_ask_margin()
+            buyout_price = max(
+                round(base_price / self.productivity * (1 + margin), 4),
+                MIN_UNIT_PRICE,
+            )
+            min_price = min(buyout_price * 0.1, MIN_UNIT_PRICE)
 
-                if self.sell(spaceship_class, 1, min_price, ask_price):
-                    logger.info(
-                        f"{self.name} sold a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
-                    )
-                    break
+            if self.sell(spaceship_class, 1, min_price, buyout_price):
+                logger.info(
+                    f"{self.name} sold a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
+                )
         else:
-            logger.warning("Cannot sell mining ship from this location.")
+            logger.warning("Cannot sell spaceship from this location.")
 
     def pilot_miner(self):
         if self.can_pilot_miner():
@@ -1273,7 +1252,7 @@ class Player:
                     and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
                 )
                 if ready_to_mission:
-                    action_index_probs.append((14, 0.01))
+                    action_index_probs.append((14, 0.1))
 
                 wanteds = [
                     x[0] for x in leaderboard.get_top_leaders("bounty", 10) if x[1] > 0
@@ -1331,12 +1310,20 @@ class Player:
                     action_index_probs.append((10, 0.1))
                 if self.can_sell():
                     action_index_probs.append((11, 0.1))
-                if self.can_buy_mining_spaceship():
+                if self.can_buy_mining_spaceship() and not isinstance(
+                    self.spaceship, (Miner, Extractor)
+                ):
                     action_index_probs.append((37, 0.02))
-                if self.can_sell_warship():
+                if self.can_sell_spaceship("corvette"):
                     action_index_probs.append((24, 0.2))
-                if self.can_sell_mining_spaceship():
+                if self.can_sell_spaceship("frigate"):
+                    action_index_probs.append((41, 0.2))
+                if self.can_sell_spaceship("destroyer"):
+                    action_index_probs.append((42, 0.2))
+                if self.can_sell_spaceship("miner"):
                     action_index_probs.append((38, 0.001))
+                if self.can_sell_spaceship("extractor"):
+                    action_index_probs.append((43, 0.001))
                 if self.can_set_home():
                     action_index_probs.append((22, 0.001))
                 if self.can_place_bounty():
@@ -1375,7 +1362,10 @@ class Player:
                     action_index_probs.append((36, 1))
 
                 if self.wallet < 10000:
-                    action_index_probs.append((14, 0.1))
+                    if isinstance(self.spaceship, (Miner, Extractor)):
+                        action_index_probs.append((14, 0.01))
+                    else:
+                        action_index_probs.append((14, 0.1))
 
                 action_indexes, probs = zip(*action_index_probs)
                 return random.choices(action_indexes, weights=probs, k=1)[0]
@@ -1450,8 +1440,8 @@ class Player:
             self.set_home()
         elif action == Action.BUY_WARSHIP.value:
             self.buy_warship()
-        elif action == Action.SELL_WARSHIP.value:
-            self.sell_warship()
+        elif action == Action.SELL_CORVETTE.value:
+            self.sell_spaceship("corvette")
         elif action == Action.BUILD_MINER.value:
             self.build_miner()
         elif action == Action.BUILD_CORVETTE.value:
@@ -1478,12 +1468,18 @@ class Player:
             self.pilot_extractor()
         elif action == Action.BUY_MINING_SPACESHIP.value:
             self.buy_mining_spaceship()
-        elif action == Action.SELL_MINING_SPACESHIP.value:
-            self.sell_mining_spaceship()
+        elif action == Action.SELL_MINER.value:
+            self.sell_spaceship("miner")
         elif action == Action.LOAD.value:
             self.load()
         elif action == Action.INVEST_MARKETPLACE.value:
             self.invest_marketplace_random_amount()
+        elif action == Action.SELL_FRIGATE.value:
+            self.sell_spaceship("frigate")
+        elif action == Action.SELL_DESTROYER.value:
+            self.sell_spaceship("destoyer")
+        elif action == Action.SELL_EXTRACTOR.value:
+            self.sell_spaceship("extractor")
         else:
             logger.error("Not matching any action!!")
         self.action_history[ACTIONS[action_index]] += 1
@@ -1500,9 +1496,9 @@ class Player:
         self.affordability = self.calculate_affordability()
         self.turn_earning = 0
 
-        self.material_gain_history.append(self.turn_material_gain)
+        self.production_history.append(self.turn_production)
         self.productivity = self.calculate_productivity()
-        self.turn_material_gain = 0
+        self.turn_production = 0
 
         self.turns_until_idle = max(self.turns_until_idle - 1, 0)
 
@@ -1601,25 +1597,25 @@ class Player:
             return 1
 
     def calculate_productivity(self):
-        if len(self.material_gain_history) >= self.short_period:
-            self.short_material_gain_ema = self.update_ema(
-                self.short_material_gain_ema, self.turn_material_gain, self.k_short
+        if len(self.production_history) >= self.short_period:
+            self.short_production_ema = self.update_ema(
+                self.short_production_ema, self.turn_production, self.k_short
             )
 
-        if len(self.material_gain_history) >= self.long_period:
-            self.long_material_gain_ema = self.update_ema(
-                self.long_material_gain_ema, self.turn_material_gain, self.k_long
+        if len(self.production_history) >= self.long_period:
+            self.long_production_ema = self.update_ema(
+                self.long_production_ema, self.turn_production, self.k_long
             )
 
-        if len(self.material_gain_history) == self.material_gain_history.maxlen:
+        if len(self.production_history) == self.production_history.maxlen:
             if (
-                self.long_material_gain_ema is not None
-                and self.short_material_gain_ema is not None
+                self.long_production_ema is not None
+                and self.short_production_ema is not None
             ):
-                if self.long_material_gain_ema > 0:
+                if self.long_production_ema > 0:
                     productivity = min(
                         max(
-                            self.short_material_gain_ema / self.long_material_gain_ema,
+                            self.short_production_ema / self.long_production_ema,
                             0.0001,
                         ),
                         10000,
@@ -1778,16 +1774,11 @@ class Player:
             else 0
         )
 
-    def can_sell_warship(self):
-        return (
-            1
-            if self.current_location.has_marketplace()
+    def can_sell_spaceship(self, spaceship_class):
+        return int(
+            self.current_location.has_marketplace()
             and self.current_location.has_storage()
-            and any(
-                self.current_location.storage.get_item(self.name, spaceship) > 0
-                for spaceship in ["destroyer", "frigate", "corvette"]
-            )
-            else 0
+            and self.current_location.storage.get_item(self.name, spaceship_class) > 0
         )
 
     def can_buy_mining_spaceship(self):
@@ -1795,18 +1786,6 @@ class Player:
             1
             if self.current_location.has_marketplace()
             and self.current_location.has_storage()
-            else 0
-        )
-
-    def can_sell_mining_spaceship(self):
-        return (
-            1
-            if self.current_location.has_marketplace()
-            and self.current_location.has_storage()
-            and any(
-                self.current_location.storage.get_item(self.name, spaceship) > 0
-                for spaceship in ["extractor", "miner"]
-            )
             else 0
         )
 
@@ -2099,9 +2078,12 @@ class Player:
             "can_bombard": self.can_bombard(),
             "can_set_home": self.can_set_home(),
             "can_buy_warship": self.can_buy_warship(),
-            "can_sell_warship": self.can_sell_warship(),
             "can_buy_mining_spaceship": self.can_buy_mining_spaceship(),
-            "can_sell_mining_spaceship": self.can_sell_mining_spaceship(),
+            "can_sell_corvette": self.can_sell_spaceship("corvette"),
+            "can_sell_frigate": self.can_sell_spaceship("frigate"),
+            "can_sell_destroyer": self.can_sell_spaceship("destroyer"),
+            "can_sell_miner": self.can_sell_spaceship("miner"),
+            "can_sell_extractor": self.can_sell_spaceship("extractor"),
             "can_build_miner": self.can_build_miner(),
             "can_build_corvette": self.can_build_corvette(),
             "can_build_frigate": self.can_build_frigate(),

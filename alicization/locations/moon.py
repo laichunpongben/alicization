@@ -73,7 +73,7 @@ class Moon(Location, Mineable):
 
         player.mining_completed += 1
         player.mined += mined_amount
-        player.turn_material_gain += mined_amount
+        player.turn_production += mined_amount
         player.universe.total_mined += mined_amount
         player.skills["mining"] = (
             int(math.log(player.mining_completed) / math.log(math.sqrt(2)))

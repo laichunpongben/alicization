@@ -21,6 +21,7 @@ JOB_COST_RATIO = 0.1
 DEFAULT_SPACESHIP_COST = 1
 P_JOB_SUCCESS_BASE = 0.9
 BASE_EARNING_RATIO = 0.5
+PRODUCTION_ESTIMATE = 0.285714
 
 
 class Factory(Building, Investable):
@@ -58,6 +59,7 @@ class Factory(Building, Investable):
             if self.job_success():
                 player.current_location.storage.add_item(player.name, blueprint_name, 1)
                 player.build += 1
+                player.turn_production += int(base_price * PRODUCTION_ESTIMATE)
                 player.universe.total_build += 1
 
                 scores = {
