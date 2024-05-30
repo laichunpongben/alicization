@@ -1054,7 +1054,7 @@ class Player:
                     and self.wallet >= 70000
                     and not isinstance(self.spaceship, Frigate)
                 ):
-                    action_index_probs.append((48, 0.2))
+                    action_index_probs.append((48, 0.4))
                 if (
                     self.can_buy_spaceship("corvette")
                     and self.wallet >= 1400
@@ -1153,7 +1153,7 @@ class Player:
                     and self.wallet >= 70000
                     and not isinstance(self.spaceship, Frigate)
                 ):
-                    action_index_probs.append((48, 0.2))
+                    action_index_probs.append((48, 0.4))
                 if (
                     self.can_buy_spaceship("corvette")
                     and self.wallet >= 1400
@@ -1283,7 +1283,7 @@ class Player:
                     and self.wallet >= 70000
                     and not isinstance(self.spaceship, Frigate)
                 ):
-                    action_index_probs.append((48, 0.2))
+                    action_index_probs.append((48, 0.4))
                 if (
                     self.can_buy_spaceship("corvette")
                     and self.wallet >= 1400
@@ -2257,11 +2257,13 @@ class Player:
             "can_build_frigate": self.can_build_frigate(),
             "can_build_destroyer": self.can_build_destroyer(),
             "can_build_extractor": self.can_build_extractor(),
+            "can_build_courier": self.can_build_courier(),
             "can_pilot_miner": self.can_pilot_miner(),
             "can_pilot_corvette": self.can_pilot_corvette(),
             "can_pilot_frigate": self.can_pilot_frigate(),
             "can_pilot_destroyer": self.can_pilot_destroyer(),
             "can_pilot_extractor": self.can_pilot_extractor(),
+            "can_pilot_courier": self.can_pilot_courier(),
             "can_place_bounty": self.can_place_bounty(),
             "spaceship": self.get_current_spaceship_type(),
             "spaceship_level": self.spaceship.level,
