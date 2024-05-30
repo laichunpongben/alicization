@@ -43,17 +43,9 @@ class Spaceship(ABC):
     def ship_class(self):
         return self._ship_class
 
-    @ship_class.setter
-    def ship_class(self, value):
-        self._ship_class = value
-
     @property
     def max_shield(self):
         return self._max_shield
-
-    @max_shield.setter
-    def max_shield(self, value):
-        self._max_shield = value
 
     @property
     def shield(self):
@@ -67,17 +59,9 @@ class Spaceship(ABC):
     def shield_upgrade(self):
         return self._shield_upgrade
 
-    @shield_upgrade.setter
-    def shield_upgrade(self, value):
-        self._shield_upgrade = value
-
     @property
     def max_armor(self):
         return self._max_armor
-
-    @max_armor.setter
-    def max_armor(self, value):
-        self._max_armor = value
 
     @property
     def armor(self):
@@ -91,25 +75,13 @@ class Spaceship(ABC):
     def armor_upgrade(self):
         return self._armor_upgrade
 
-    @armor_upgrade.setter
-    def armor_upgrade(self, value):
-        self._armor_upgrade = value
-
     @property
     def max_hull(self):
         return self._max_hull
 
-    @max_hull.setter
-    def max_hull(self, value):
-        self._max_hull = value
-
     @property
     def hull_upgrade(self):
         return self._hull_upgrade
-
-    @hull_upgrade.setter
-    def hull_upgrade(self, value):
-        self._hull_upgrade = value
 
     @property
     def hull(self):
@@ -122,10 +94,6 @@ class Spaceship(ABC):
     @property
     def max_power(self):
         return self._max_power
-
-    @max_power.setter
-    def max_power(self, value):
-        self._max_power = value
 
     @property
     def power(self):
@@ -147,10 +115,6 @@ class Spaceship(ABC):
     def weapon_upgrade(self):
         return self._weapon_upgrade
 
-    @weapon_upgrade.setter
-    def weapon_upgrade(self, value):
-        self._weapon_upgrade = value
-
     @property
     def engine(self):
         return self._engine
@@ -162,10 +126,6 @@ class Spaceship(ABC):
     @property
     def max_cargo_size(self):
         return self._max_cargo_size
-
-    @max_cargo_size.setter
-    def max_cargo_size(self, value):
-        self._max_cargo_size = value
 
     @property
     def cargo_hold(self):
@@ -179,41 +139,21 @@ class Spaceship(ABC):
     def base_repair_cost(self):
         return self._base_repair_cost
 
-    @base_repair_cost.setter
-    def base_repair_cost(self, value):
-        self._base_repair_cost = value
-
     @property
     def base_upgrade_cost(self):
         return self._base_upgrade_cost
-
-    @base_upgrade_cost.setter
-    def base_upgrade_cost(self, value):
-        self._base_upgrade_cost = value
 
     @property
     def level(self):
         return self._level
 
-    @level.setter
-    def level(self, value):
-        self._level = value
-
     @property
     def max_level(self):
         return self._max_level
 
-    @max_level.setter
-    def max_level(self, value):
-        self._max_level = value
-
     @property
     def mining(self):
         return self._mining
-
-    @mining.setter
-    def mining(self, value):
-        self._mining = value
 
     @property
     def destroyed(self):
@@ -224,50 +164,50 @@ class Spaceship(ABC):
         self._destroyed = value
 
     def is_damaged(self):
-        return self.armor < self.max_armor or self.hull < self.max_hull
+        return self._armor < self._max_armor or self._hull < self._max_hull
 
     def take_damage(self, damage):
-        if damage >= self.shield:
-            damage -= self.shield
-            self.shield = 0
+        if damage >= self._shield:
+            damage -= self._shield
+            self._shield = 0
             if damage > 0:
-                if damage >= self.armor:
-                    damage -= self.armor
-                    self.armor = 0
+                if damage >= self._armor:
+                    damage -= self._armor
+                    self._armor = 0
                     if damage > 0:
-                        if damage > self.hull:
-                            self.hull = 0
-                            self.destroyed = True
+                        if damage > self._hull:
+                            self._hull = 0
+                            self._destroyed = True
                         else:
-                            self.hull -= damage
+                            self._hull -= damage
                 else:
-                    self.armor -= damage
+                    self._armor -= damage
                     damage = 0
         else:
-            self.shield -= damage
+            self._shield -= damage
             damage = 0
 
     def recharge_shield(self):
-        self.shield = min(self.shield + int(self.max_shield / 10), self.max_shield)
+        self._shield = min(self._shield + int(self._max_shield / 10), self._max_shield)
 
     def recharge_shield_full(self):
-        self.shield = self.max_shield
+        self._shield = self._max_shield
 
     def calc_repair_cost(self):
-        return (1 + self.level / 10) * self.base_repair_cost
+        return (1 + self._level / 10) * self._base_repair_cost
 
     def repair(self):
-        self.shield = self.max_shield
-        self.armor = self.max_armor
-        self.hull = self.max_hull
+        self._shield = self._max_shield
+        self._armor = self._max_armor
+        self._hull = self._max_hull
         logger.debug("Spaceship repair done!")
 
     def calc_upgrade_cost(self):
-        return (1 + self.level / 2) * self.base_upgrade_cost
+        return (1 + self._level / 2) * self._base_upgrade_cost
 
     def calculate_cargo_size(self):
         cargo_size = 0
-        for item, quantity in self.cargo_hold.items():
+        for item, quantity in self._cargo_hold.items():
             material = material_manager.get_material(item)
             if material:
                 volume = (
@@ -279,22 +219,22 @@ class Spaceship(ABC):
 
     def is_cargo_full(self):
         cargo_size = self.calculate_cargo_size()
-        return cargo_size >= self.max_cargo_size
+        return cargo_size >= self._max_cargo_size
 
     def is_cargo_empty(self):
         cargo_size = self.calculate_cargo_size()
         return cargo_size <= 0
 
     def upgrade(self):
-        if self.level < self.max_level:
-            self.weapon += self.weapon_upgrade
-            self.max_shield += self.shield_upgrade
-            self.max_armor += self.armor_upgrade
-            self.max_hull += self.hull_upgrade
-            self.shield = self.max_shield
-            self.armor = self.max_armor
-            self.hull = self.max_hull
-            self.level += 1
+        if self._level < self._max_level:
+            self._weapon += self._weapon_upgrade
+            self._max_shield += self._shield_upgrade
+            self._max_armor += self._armor_upgrade
+            self._max_hull += self._hull_upgrade
+            self._shield = self._max_shield
+            self._armor = self._max_armor
+            self._hull = self._max_hull
+            self._level += 1
             logger.debug("Spaceship upgrade done!")
         else:
             logger.debug("Spaceship max upgrade reached!")
