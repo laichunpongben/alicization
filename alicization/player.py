@@ -18,6 +18,8 @@ from .locations.stargate import Stargate
 from .locations.debris import Debris
 from .locations.empty_space import EmptySpace
 from .locations.mineable import Mineable
+from .managers.time_keeper import TimeKeeper
+from .managers.player_manager import PlayerManager
 from .managers.blueprint_manager import BlueprintManager
 from .managers.material_manager import MaterialManager
 from .managers.spaceship_manager import SpaceshipManager
@@ -31,6 +33,8 @@ from .spaceships.destroyer import Destroyer
 
 logger = logging.getLogger(__name__)
 
+time_keeper = TimeKeeper()
+player_manager = PlayerManager()
 blueprint_manager = BlueprintManager()
 material_manager = MaterialManager()
 spaceship_manager = SpaceshipManager()
@@ -77,6 +81,7 @@ ACTION_ENUMS = [
     Action.BUY_MINING_SPACESHIP,
     Action.SELL_MINING_SPACESHIP,
     Action.LOAD,
+    Action.INVEST_MARKETPLACE,
 ]
 ACTIONS = [action.value for action in ACTION_ENUMS]
 NUM_ATTACK_ROUND = 10
@@ -90,6 +95,11 @@ DEFAULT_SPACESHIP_COST = 1
 SET_HOME_COST = 1000
 MIN_BOUNTY = 1000
 NUM_RESPAWN_IDLE_TURN = 10
+EARNING_MEMORY = 10000
+MATERIAL_GAIN_MEMORY = 10000
+MIN_UNIT_PRICE = 0.0001
+ASK_MARGIN = 0.5
+BID_MARGIN = 0.2
 
 
 class Player:
@@ -138,9 +148,25 @@ class Player:
         self.mission_completed = 0
         self.salvage_completed = 0
         self.mining_completed = 0
+        self.transaction_completed = 0
         self.net_worth = self.calculate_net_worth()
         self.score = self.calculate_score()
         self.last_killed_by = None
+        self.affordability = 1
+        self.earning_history = deque(maxlen=EARNING_MEMORY)
+        self.turn_earning = 0
+        self.long_earning_ema = None
+        self.short_earning_ema = None
+        self.productivity = 1
+        self.material_gain_history = deque(maxlen=MATERIAL_GAIN_MEMORY)
+        self.turn_material_gain = 0
+        self.long_material_gain_ema = None
+        self.short_material_gain_ema = None
+        self.long_period = EARNING_MEMORY
+        self.short_period = int(EARNING_MEMORY * 0.5)
+        self.k_long = 2 / (self.long_period + 1)
+        self.k_short = 2 / (self.short_period + 1)
+        player_manager.add_player(self)
 
     def move(self, location):
         self.current_location.remove_player(self)
@@ -218,7 +244,7 @@ class Player:
     def unload(self):
         if self.can_unload():
             for item, qty in self.spaceship.cargo_hold.items():
-                self.current_location.storage.add_item(self, item, qty)
+                self.current_location.storage.add_item(self.name, item, qty)
             self.spaceship.cargo_hold = defaultdict(int)
             logger.info(
                 f"{self.name} unloaded cargo at {self.current_system.name} - {self.current_location.name}"
@@ -229,78 +255,96 @@ class Player:
     def load(self):
         if self.can_load():
             for item, max_qty in self.current_location.storage.get_inventory(
-                self
+                self.name
             ).items():
                 qty = random.randint(0, max_qty)
                 if not self.spaceship.is_cargo_full():
                     self.spaceship.cargo_hold[item] += qty
-                    self.current_location.storage.remove_item(self, item, qty)
+                    self.current_location.storage.remove_item(self.name, item, qty)
             logger.info(
                 f"{self.name} loaded cargo at {self.current_system.name} - {self.current_location.name}"
             )
         else:
             logger.warning("Cannot load cargo from this location.")
 
-    def buy(self, resource, quantity):
+    def buy(self, item_type, quantity, price):
         if (
             self.current_location.has_marketplace()
             and self.current_location.has_storage()
+            and self.wallet >= quantity * price
         ):
-            if self.current_location.marketplace.buy(self, resource, quantity):
-                logger.debug(f"{self.name} bought {quantity} of {resource}")
+            if self.current_location.marketplace.place_bid_order(
+                self, item_type, quantity, price
+            ):
+                logger.debug(
+                    f"{self.name} placed bid order for {item_type}: {quantity}@{price}"
+                )
                 return True
             else:
-                logger.warning(f"{self.name} failed to buy {quantity} of {resource}")
+                logger.warning(
+                    f"{self.name} failed to place bid order for {item_type}: {quantity}@{price}"
+                )
                 return False
         else:
             logger.warning("Cannot buy from this location.")
             return False
 
-    def buy_random_resource(self):
+    def buy_random_material(self):
         if (
             self.current_location.has_marketplace()
             and self.current_location.has_storage()
+            and self.wallet > 0
         ):
-            available_resources = [
-                res
-                for res, data in self.current_location.marketplace.inventory.items()
-                if data["quantity"] > 0
-            ]
-            if available_resources:
-                resource = random.choice(available_resources)
-                max_qty = max(
-                    min(
-                        self.current_location.marketplace.inventory[resource][
-                            "quantity"
-                        ],
-                        int(
-                            self.wallet
-                            / self.current_location.marketplace.inventory[resource][
-                                "price"
-                            ]
-                        ),
-                    ),
-                    0,
-                )
-                qty = random.randint(0, max_qty)
-                self.buy(resource, qty)
+            sampled_max_rarity = random.choices([1, 2, 3], weights=[12, 4, 1], k=1)[0]
+            material = material_manager.random_material(max_rarity=sampled_max_rarity)
+            base_price = material_manager.guess_base_price(material.rarity)
+            margin = self.random_bid_margin()
+            bid_price = max(
+                round(base_price * self.affordability * (1 + margin), 4), MIN_UNIT_PRICE
+            )
 
-    def sell(self, resource, quantity):
+            spend_factor = 0.01
+            max_qty = max(int(self.wallet * spend_factor / bid_price), 0)
+            if max_qty > 1:
+                qty_buy = random.randint(1, max_qty)
+                self.buy(material.name, qty_buy, bid_price)
+            elif max_qty == 1:
+                self.buy(material.name, 1, bid_price)
+
+    def sell(self, item_type, quantity, min_price, buyout_price):
         if (
             self.current_location.has_marketplace()
             and self.current_location.has_storage()
         ):
-            if self.current_location.marketplace.sell(self, resource, quantity):
-                logger.debug(f"{self.name} sold {quantity} of {resource}")
+            if self.current_location.marketplace.place_ask_order(
+                self, item_type, quantity, min_price, buyout_price
+            ):
+                logger.debug(
+                    f"{self.name} placed ask order for {item_type}: {quantity}@{min_price}/{buyout_price}"
+                )
                 return True
             else:
-                logger.warning(f"{self.name} failed to sell {quantity} of {resource}")
+                logger.warning(
+                    f"{self.name} failed to place ask order for {item_type}: {quantity}@{min_price}/{buyout_price}"
+                )
                 return False
         else:
             logger.warning("Cannot sell from this location.")
             return False
 
-    def sell_random_resource(self):
+    def random_bid_margin(self):
+        price_index = self.universe.galactic_price_index
+        min_ = min(0, price_index * (1 + BID_MARGIN) - 1)
+        max_ = max(0, price_index * (1 + BID_MARGIN) - 1)
+        return max(random.uniform(min_, max_), 0)
+
+    def random_ask_margin(self):
+        price_index = self.universe.galactic_price_index
+        min_ = min(price_index - 1, price_index * (1 + ASK_MARGIN) - 1)
+        max_ = max(price_index - 1, price_index * (1 + ASK_MARGIN) - 1)
+        return max(random.uniform(min_, max_), 0)
+
+    def sell_random_material(self):
         if (
             self.current_location.has_marketplace()
             and self.current_location.has_storage()
@@ -308,18 +352,31 @@ class Player:
             available_resources = [
                 (res, qty)
                 for res, qty in self.current_location.storage.get_inventory(
-                    self
+                    self.name
                 ).items()
                 if qty > 0
             ]
             if available_resources:
-                resource, qty = random.choice(available_resources)
-                qty_sell = random.randint(1, qty)
-                self.sell(resource, qty_sell)
+                material_name, qty = random.choice(available_resources)
+                material = material_manager.get_material(material_name)
+                if material:
+                    base_price = material_manager.guess_base_price(material.rarity)
+                    margin = self.random_ask_margin()
+                    buyout_price = max(
+                        round(base_price / self.productivity * (1 + margin), 4),
+                        MIN_UNIT_PRICE,
+                    )
+                    min_price = max(buyout_price / 2, MIN_UNIT_PRICE)
+                    qty_sell = random.randint(1, qty)
+                    self.sell(material_name, qty_sell, min_price, buyout_price)
+                else:
+                    logger.warning("No available material for selling")
+            else:
+                logger.warning("No available material for selling")
 
     def manufacture(self, blueprint_name):
         if self.current_location.factory.manufacture(self, blueprint_name):
-            logger.info(f"{self.name} built {blueprint_name}.")
+            logger.debug(f"{self.name} built {blueprint_name}.")
         else:
             logger.warning(f"{blueprint_name} manufacturing job failed!")
 
@@ -396,6 +453,23 @@ class Player:
         spend_factor = 0.01
         investment = random.randint(0, max(int(self.wallet * spend_factor), 0))
         self.invest_drydock(investment)
+
+    def invest_marketplace(self, amount):
+        if self.current_location.has_marketplace():
+            if self.wallet >= amount:
+                self.current_location.marketplace.invest(self, amount)
+                logger.debug(
+                    f"{self.name} invested {amount} at the marketplace at {self.current_system.name} - {self.current_location.name}"
+                )
+            else:
+                logger.warning(f"{self.name} failed to invest {amount}")
+        else:
+            logger.warning("Cannot invest from this location.")
+
+    def invest_marketplace_random_amount(self):
+        spend_factor = 0.01
+        investment = random.randint(0, max(int(self.wallet * spend_factor), 0))
+        self.invest_marketplace(investment)
 
     def collect(self):
         if self.can_collect():
@@ -481,9 +555,10 @@ class Player:
         )
         if target_player.spaceship.destroyed:
             if not self.spaceship.is_cargo_full():
-                for item, count in target_player.spaceship.cargo_hold.items():
+                for item, qty in target_player.spaceship.cargo_hold.items():
                     if random.random() < P_SALVAGE:
-                        self.spaceship.cargo_hold[item] += count
+                        self.spaceship.cargo_hold[item] += qty
+                        self.turn_material_gain += qty
                 target_player.spaceship.cargo_hold = defaultdict(int)
             else:
                 self.current_system.make_debris(target_player.spaceship.cargo_hold)
@@ -501,7 +576,7 @@ class Player:
 
             bounty = leaderboard.get_achievement_score(target_player.name, "bounty")
             if bounty > 0:
-                self.wallet += bounty
+                self.earn(bounty)
                 leaderboard.log_achievement(
                     target_player.name, "bounty", 0, overwrite=True
                 )
@@ -535,7 +610,7 @@ class Player:
 
                 bounty = leaderboard.get_achievement_score(self.name, "bounty")
                 if bounty > 0:
-                    target_player.wallet += bounty
+                    target_player.earn(bounty)
                     leaderboard.log_achievement(self.name, "bounty", 0, overwrite=True)
                     logger.info(f"{target_player.name} earned {bounty} bounty!")
 
@@ -613,10 +688,21 @@ class Player:
 
     def buy_warship(self):
         if self.can_buy_warship():
-            for spaceship in ["destroyer", "frigate", "corvette"]:
-                if self.buy(spaceship, 1):
+            for spaceship_class in ["destroyer", "frigate", "corvette"]:
+                spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
+                if spaceship_info:
+                    base_price = spaceship_info.base_price
+                else:
+                    base_price = DEFAULT_SPACESHIP_COST
+                margin = self.random_bid_margin()
+                bid_price = max(
+                    round(base_price * self.affordability * (1 + margin), 4),
+                    MIN_UNIT_PRICE,
+                )
+
+                if self.wallet >= bid_price and self.buy(spaceship_class, 1, bid_price):
                     logger.info(
-                        f"{self.name} bought a {spaceship} at {self.current_system.name} - {self.current_location.name}"
+                        f"{self.name} bought a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
                     )
                     break
         else:
@@ -624,10 +710,22 @@ class Player:
 
     def sell_warship(self):
         if self.can_sell_warship():
-            for spaceship in ["destroyer", "frigate", "corvette"]:
-                if self.sell(spaceship, 1):
+            for spaceship_class in ["destroyer", "frigate", "corvette"]:
+                spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
+                if spaceship_info:
+                    base_price = spaceship_info.base_price
+                else:
+                    base_price = DEFAULT_SPACESHIP_COST
+                margin = self.random_ask_margin()
+                ask_price = max(
+                    round(base_price / self.productivity * (1 + margin), 4),
+                    MIN_UNIT_PRICE,
+                )
+                min_price = min(ask_price / 2, MIN_UNIT_PRICE)
+
+                if self.sell(spaceship_class, 1, min_price, ask_price):
                     logger.info(
-                        f"{self.name} sold a {spaceship} at {self.current_system.name} - {self.current_location.name}"
+                        f"{self.name} sold a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
                     )
                     break
         else:
@@ -635,10 +733,21 @@ class Player:
 
     def buy_mining_spaceship(self):
         if self.can_buy_mining_spaceship():
-            for spaceship in ["extractor", "miner"]:
-                if self.buy(spaceship, 1):
+            for spaceship_class in ["extractor", "miner"]:
+                spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
+                if spaceship_info:
+                    base_price = spaceship_info.base_price
+                else:
+                    base_price = DEFAULT_SPACESHIP_COST
+                margin = self.random_bid_margin()
+                bid_price = max(
+                    round(base_price * self.affordability * (1 + margin), 4),
+                    MIN_UNIT_PRICE,
+                )
+
+                if self.wallet >= bid_price and self.buy(spaceship_class, 1, bid_price):
                     logger.info(
-                        f"{self.name} bought a {spaceship} at {self.current_system.name} - {self.current_location.name}"
+                        f"{self.name} bought a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
                     )
                     break
         else:
@@ -646,10 +755,22 @@ class Player:
 
     def sell_mining_spaceship(self):
         if self.can_sell_mining_spaceship():
-            for spaceship in ["extractor", "miner"]:
-                if self.sell(spaceship, 1):
+            for spaceship_class in ["extractor", "miner"]:
+                spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
+                if spaceship_info:
+                    base_price = spaceship_info.base_price
+                else:
+                    base_price = DEFAULT_SPACESHIP_COST
+                margin = self.random_ask_margin()
+                ask_price = max(
+                    round(base_price / self.productivity * (1 + margin), 4),
+                    MIN_UNIT_PRICE,
+                )
+                min_price = min(ask_price / 2, MIN_UNIT_PRICE)
+
+                if self.sell(spaceship_class, 1, min_price, ask_price):
                     logger.info(
-                        f"{self.name} sold a {spaceship} at {self.current_system.name} - {self.current_location.name}"
+                        f"{self.name} sold a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
                     )
                     break
         else:
@@ -659,7 +780,7 @@ class Player:
         if self.can_pilot_miner():
             new_spaceship = self.current_location.hangar.remove_spaceship(self, "miner")
             if new_spaceship is None:
-                self.current_location.storage.remove_item(self, "miner", 1)
+                self.current_location.storage.remove_item(self.name, "miner", 1)
                 new_spaceship = Miner()
 
             if new_spaceship is not None:
@@ -685,7 +806,7 @@ class Player:
                 self, "corvette"
             )
             if new_spaceship is None:
-                self.current_location.storage.remove_item(self, "corvette", 1)
+                self.current_location.storage.remove_item(self.name, "corvette", 1)
                 new_spaceship = Corvette()
 
             if new_spaceship is not None:
@@ -711,7 +832,7 @@ class Player:
                 self, "frigate"
             )
             if new_spaceship is None:
-                self.current_location.storage.remove_item(self, "frigate", 1)
+                self.current_location.storage.remove_item(self.name, "frigate", 1)
                 new_spaceship = Frigate()
 
             if new_spaceship is not None:
@@ -737,7 +858,7 @@ class Player:
                 self, "destroyer"
             )
             if new_spaceship is None:
-                self.current_location.storage.remove_item(self, "destroyer", 1)
+                self.current_location.storage.remove_item(self.name, "destroyer", 1)
                 new_spaceship = Destroyer()
 
             if new_spaceship is not None:
@@ -763,7 +884,7 @@ class Player:
                 self, "extractor"
             )
             if new_spaceship is None:
-                self.current_location.storage.remove_item(self, "extractor", 1)
+                self.current_location.storage.remove_item(self.name, "extractor", 1)
                 new_spaceship = Extractor()
 
             if new_spaceship is not None:
@@ -800,7 +921,15 @@ class Player:
 
     def spend(self, money: float):
         self.wallet -= money
-        self.universe.total_money_spent += money
+        self.universe.total_spending += money
+
+    def unspend(self, money: float):
+        self.spend(-money)
+
+    def earn(self, money: float):
+        self.wallet += money
+        self.turn_earning += money
+        self.universe.total_earning += money
 
     def die(self):
         logger.warning(
@@ -875,6 +1004,8 @@ class Player:
                     action_index_probs.append((12, 0.001))
                 if self.can_invest_drydock():
                     action_index_probs.append((32, 0.001))
+                if self.can_invest_marketplace():
+                    action_index_probs.append((40, 0.001))
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
 
@@ -922,15 +1053,17 @@ class Player:
                 if self.can_load():
                     action_index_probs.append((39, 0.001))
                 if self.can_sell():
-                    action_index_probs.append((11, 0.01))
+                    action_index_probs.append((11, 0.2))
                 if self.can_buy_warship():
-                    action_index_probs.append((23, 1))
+                    action_index_probs.append((23, 0.2))
                 if self.can_set_home():
                     action_index_probs.append((22, 0.001))
                 if self.can_invest_factory():
                     action_index_probs.append((12, 0.001))
                 if self.can_invest_drydock():
                     action_index_probs.append((32, 0.001))
+                if self.can_invest_marketplace():
+                    action_index_probs.append((40, 0.001))
                 if self.can_collect():
                     action_index_probs.append((13, 0.01))
                 if self.can_set_home():
@@ -991,9 +1124,9 @@ class Player:
                 if self.can_load():
                     action_index_probs.append((39, 0.001))
                 if self.can_sell():
-                    action_index_probs.append((11, 0.01))
+                    action_index_probs.append((11, 0.2))
                 if self.can_buy_warship():
-                    action_index_probs.append((23, 0.1))
+                    action_index_probs.append((23, 0.2))
                 if self.can_buy_mining_spaceship():
                     action_index_probs.append((37, 0.0001))
                 if self.can_set_home():
@@ -1002,6 +1135,8 @@ class Player:
                     action_index_probs.append((12, 0.001))
                 if self.can_invest_drydock():
                     action_index_probs.append((32, 0.001))
+                if self.can_invest_marketplace():
+                    action_index_probs.append((40, 0.001))
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
 
@@ -1037,7 +1172,9 @@ class Player:
 
                 ready_to_mission = (
                     self.can_mission()
-                    and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
+                    and isinstance(
+                        self.spaceship, (Destroyer, Frigate, Corvette, Explorer)
+                    )
                     and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
                     and math.isclose(self.spaceship.armor, self.spaceship.max_armor)
                 )
@@ -1082,15 +1219,17 @@ class Player:
                 if self.can_load():
                     action_index_probs.append((39, 0.001))
                 if self.can_sell():
-                    action_index_probs.append((11, 0.01))
+                    action_index_probs.append((11, 0.2))
                 if self.can_buy_warship():
-                    action_index_probs.append((23, 0.1))
+                    action_index_probs.append((23, 0.2))
                 if self.can_buy_mining_spaceship():
                     action_index_probs.append((37, 0.0001))
                 if self.can_invest_factory():
                     action_index_probs.append((12, 0.001))
                 if self.can_invest_drydock():
                     action_index_probs.append((32, 0.001))
+                if self.can_invest_marketplace():
+                    action_index_probs.append((40, 0.001))
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
 
@@ -1127,7 +1266,9 @@ class Player:
 
                 ready_to_mission = (
                     self.can_mission()
-                    and isinstance(self.spaceship, (Destroyer, Frigate, Corvette))
+                    and isinstance(
+                        self.spaceship, (Destroyer, Frigate, Corvette, Explorer)
+                    )
                     and math.isclose(self.spaceship.armor, self.spaceship.max_armor)
                     and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
                 )
@@ -1171,7 +1312,7 @@ class Player:
             elif self.goal == Goal.MAX_BUILD:
                 action_index_probs = []
                 if self.can_move_planet():
-                    action_index_probs.append((1, 0.02))
+                    action_index_probs.append((1, 0.1))
                 if self.can_move_asteroid_belt():
                     action_index_probs.append((2, 0.05))
                 if self.can_move_moon():
@@ -1187,9 +1328,9 @@ class Player:
                 if self.can_salvage():
                     action_index_probs.append((17, 0.10))
                 if self.can_buy():
-                    action_index_probs.append((10, 0.01))
+                    action_index_probs.append((10, 0.1))
                 if self.can_sell():
-                    action_index_probs.append((11, 0.01))
+                    action_index_probs.append((11, 0.1))
                 if self.can_buy_mining_spaceship():
                     action_index_probs.append((37, 0.02))
                 if self.can_sell_warship():
@@ -1204,18 +1345,16 @@ class Player:
                     action_index_probs.append((12, 0.001))
                 if self.can_invest_drydock():
                     action_index_probs.append((32, 0.001))
+                if self.can_invest_marketplace():
+                    action_index_probs.append((40, 0.001))
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
                 if self.can_repair():
                     action_index_probs.append((15, 0.1))
                 if self.can_upgrade():
                     action_index_probs.append((16, 0.03))
-
                 if self.can_unload():
-                    if self.spaceship.is_cargo_full():
-                        action_index_probs.append((9, 1))
-                    else:
-                        action_index_probs.append((9, 0.01))
+                    action_index_probs.append((9, 0.1))
                 if self.can_load():
                     action_index_probs.append((39, 0.01))
 
@@ -1235,6 +1374,9 @@ class Player:
                 if self.can_pilot_extractor:
                     action_index_probs.append((36, 1))
 
+                if self.wallet < 10000:
+                    action_index_probs.append((14, 0.1))
+
                 action_indexes, probs = zip(*action_index_probs)
                 return random.choices(action_indexes, weights=probs, k=1)[0]
             else:
@@ -1246,7 +1388,7 @@ class Player:
                     4: 11,
                     5: 2,  # Map turns to action indexes
                 }.get(
-                    self.universe.current_turn % 10, 8
+                    time_keeper.turn % 10, 8
                 )  # Default to mining
 
         return self.last_action_index
@@ -1281,9 +1423,9 @@ class Player:
         elif action == Action.UNLOAD.value:
             self.unload()
         elif action == Action.BUY.value:
-            self.buy_random_resource()
+            self.buy_random_material()
         elif action == Action.SELL.value:
-            self.sell_random_resource()
+            self.sell_random_material()
         elif action == Action.INVEST_FACTORY.value:
             self.invest_factory_random_amount()
         elif action == Action.COLLECT.value:
@@ -1340,6 +1482,8 @@ class Player:
             self.sell_mining_spaceship()
         elif action == Action.LOAD.value:
             self.load()
+        elif action == Action.INVEST_MARKETPLACE.value:
+            self.invest_marketplace_random_amount()
         else:
             logger.error("Not matching any action!!")
         self.action_history[ACTIONS[action_index]] += 1
@@ -1351,6 +1495,15 @@ class Player:
         self.net_worth = self.calculate_net_worth()
         self.roi = self.calculate_roi()
         self.score = self.calculate_score()
+
+        self.earning_history.append(self.turn_earning)
+        self.affordability = self.calculate_affordability()
+        self.turn_earning = 0
+
+        self.material_gain_history.append(self.turn_material_gain)
+        self.productivity = self.calculate_productivity()
+        self.turn_material_gain = 0
+
         self.turns_until_idle = max(self.turns_until_idle - 1, 0)
 
     def update_memory_and_learn(self, state_before_action, action_index):
@@ -1375,7 +1528,7 @@ class Player:
         material_price_cache = {}
         for system in self.universe.star_systems:
             for planet in system.planets:
-                inventory = planet.storage.get_inventory(self)
+                inventory = planet.storage.get_inventory(self.name)
                 for item, quantity in inventory.items():
                     if item not in material_price_cache:
                         material = material_manager.get_material(item)
@@ -1384,7 +1537,7 @@ class Player:
                                 material.rarity
                             )
                             material_price_cache[item] = (
-                                base_price_guess * self.universe.global_price_index
+                                base_price_guess * self.universe.galactic_price_index
                             )
                         else:
                             material_price_cache[item] = 0
@@ -1416,6 +1569,69 @@ class Player:
         )
         return score
 
+    def update_ema(self, current_ema, new_value, k):
+        if current_ema is None:
+            return new_value
+        return new_value * k + current_ema * (1 - k)
+
+    def calculate_affordability(self):
+        if len(self.earning_history) >= self.short_period:
+            self.short_earning_ema = self.update_ema(
+                self.short_earning_ema, self.turn_earning, self.k_short
+            )
+
+        if len(self.earning_history) >= self.long_period:
+            self.long_earning_ema = self.update_ema(
+                self.long_earning_ema, self.turn_earning, self.k_long
+            )
+
+        if len(self.earning_history) == self.earning_history.maxlen:
+            if self.long_earning_ema is not None and self.short_earning_ema is not None:
+                if self.long_earning_ema > 0:
+                    affordability = min(
+                        max(self.short_earning_ema / self.long_earning_ema, 0.0001),
+                        10000,
+                    )
+                    return affordability
+                else:
+                    return 1
+            else:
+                return 1
+        else:
+            return 1
+
+    def calculate_productivity(self):
+        if len(self.material_gain_history) >= self.short_period:
+            self.short_material_gain_ema = self.update_ema(
+                self.short_material_gain_ema, self.turn_material_gain, self.k_short
+            )
+
+        if len(self.material_gain_history) >= self.long_period:
+            self.long_material_gain_ema = self.update_ema(
+                self.long_material_gain_ema, self.turn_material_gain, self.k_long
+            )
+
+        if len(self.material_gain_history) == self.material_gain_history.maxlen:
+            if (
+                self.long_material_gain_ema is not None
+                and self.short_material_gain_ema is not None
+            ):
+                if self.long_material_gain_ema > 0:
+                    productivity = min(
+                        max(
+                            self.short_material_gain_ema / self.long_material_gain_ema,
+                            0.0001,
+                        ),
+                        10000,
+                    )
+                    return productivity
+                else:
+                    return 1
+            else:
+                return 1
+        else:
+            return 1
+
     def can_move_planet(self):
         return int(len(self.current_system.planets) > 0)
 
@@ -1445,7 +1661,7 @@ class Player:
     def can_load(self):
         return int(
             self.current_location.has_storage()
-            and bool(self.current_location.storage.get_inventory(self))
+            and bool(self.current_location.storage.get_inventory(self.name))
             and not self.spaceship.is_cargo_full()
         )
 
@@ -1477,7 +1693,7 @@ class Player:
         return int(
             self.current_location.has_marketplace()
             and self.current_location.has_storage()
-            and bool(self.current_location.storage.get_inventory(self))
+            and bool(self.current_location.storage.get_inventory(self.name))
         )
 
     def can_invest_factory(self):
@@ -1485,6 +1701,9 @@ class Player:
 
     def can_invest_drydock(self):
         return int(self.current_location.has_drydock() and self.wallet > 0)
+
+    def can_invest_marketplace(self):
+        return int(self.current_location.has_marketplace() and self.wallet > 0)
 
     def can_collect(self):
         can_collect_factory = (
@@ -1556,13 +1775,6 @@ class Player:
             1
             if self.current_location.has_marketplace()
             and self.current_location.has_storage()
-            and any(
-                self.wallet
-                >= self.current_location.marketplace.inventory[spaceship]["price"]
-                and self.current_location.marketplace.inventory[spaceship]["quantity"]
-                > 0
-                for spaceship in ["destroyer", "frigate", "corvette"]
-            )
             else 0
         )
 
@@ -1572,7 +1784,7 @@ class Player:
             if self.current_location.has_marketplace()
             and self.current_location.has_storage()
             and any(
-                self.current_location.storage.get_item(self, spaceship) > 0
+                self.current_location.storage.get_item(self.name, spaceship) > 0
                 for spaceship in ["destroyer", "frigate", "corvette"]
             )
             else 0
@@ -1583,13 +1795,6 @@ class Player:
             1
             if self.current_location.has_marketplace()
             and self.current_location.has_storage()
-            and any(
-                self.wallet
-                >= self.current_location.marketplace.inventory[spaceship]["price"]
-                and self.current_location.marketplace.inventory[spaceship]["quantity"]
-                > 0
-                for spaceship in ["extractor", "miner"]
-            )
             else 0
         )
 
@@ -1599,7 +1804,7 @@ class Player:
             if self.current_location.has_marketplace()
             and self.current_location.has_storage()
             and any(
-                self.current_location.storage.get_item(self, spaceship) > 0
+                self.current_location.storage.get_item(self.name, spaceship) > 0
                 for spaceship in ["extractor", "miner"]
             )
             else 0
@@ -1610,11 +1815,12 @@ class Player:
             1
             if self.current_location.has_factory()
             and self.current_location.has_storage()
-            and self.current_location.storage.get_item(self, "cosmic_resin") >= 160
-            and self.current_location.storage.get_item(self, "hyper_dust") >= 70
-            and self.current_location.storage.get_item(self, "presolar_grain") >= 180
-            and self.current_location.storage.get_item(self, "nebulite") >= 35
-            and self.current_location.storage.get_item(self, "water_ice") >= 55
+            and self.current_location.storage.get_item(self.name, "cosmic_resin") >= 160
+            and self.current_location.storage.get_item(self.name, "hyper_dust") >= 70
+            and self.current_location.storage.get_item(self.name, "presolar_grain")
+            >= 180
+            and self.current_location.storage.get_item(self.name, "nebulite") >= 35
+            and self.current_location.storage.get_item(self.name, "water_ice") >= 55
             else 0
         )
 
@@ -1623,11 +1829,11 @@ class Player:
             1
             if self.current_location.has_factory()
             and self.current_location.has_storage()
-            and self.current_location.storage.get_item(self, "cosmic_ice") >= 320
-            and self.current_location.storage.get_item(self, "helium") >= 360
-            and self.current_location.storage.get_item(self, "hyper_dust") >= 140
-            and self.current_location.storage.get_item(self, "nebulite") >= 70
-            and self.current_location.storage.get_item(self, "water_ice") >= 110
+            and self.current_location.storage.get_item(self.name, "cosmic_ice") >= 320
+            and self.current_location.storage.get_item(self.name, "helium") >= 360
+            and self.current_location.storage.get_item(self.name, "hyper_dust") >= 140
+            and self.current_location.storage.get_item(self.name, "nebulite") >= 70
+            and self.current_location.storage.get_item(self.name, "water_ice") >= 110
             else 0
         )
 
@@ -1636,17 +1842,20 @@ class Player:
             1
             if self.current_location.has_factory()
             and self.current_location.has_storage()
-            and self.current_location.storage.get_item(self, "cosmic_dust") >= 8000
-            and self.current_location.storage.get_item(self, "cosmic_ice") >= 6000
-            and self.current_location.storage.get_item(self, "helium") >= 5000
-            and self.current_location.storage.get_item(self, "hyper_dust") >= 4000
-            and self.current_location.storage.get_item(self, "spacetime_dust") >= 7000
-            and self.current_location.storage.get_item(self, "astralite") >= 2500
-            and self.current_location.storage.get_item(self, "hyperspace_flux") >= 1800
-            and self.current_location.storage.get_item(self, "pulsar_residue") >= 2000
-            and self.current_location.storage.get_item(self, "rare_earth_minerals")
+            and self.current_location.storage.get_item(self.name, "cosmic_dust") >= 8000
+            and self.current_location.storage.get_item(self.name, "cosmic_ice") >= 6000
+            and self.current_location.storage.get_item(self.name, "helium") >= 5000
+            and self.current_location.storage.get_item(self.name, "hyper_dust") >= 4000
+            and self.current_location.storage.get_item(self.name, "spacetime_dust")
+            >= 7000
+            and self.current_location.storage.get_item(self.name, "astralite") >= 2500
+            and self.current_location.storage.get_item(self.name, "hyperspace_flux")
+            >= 1800
+            and self.current_location.storage.get_item(self.name, "pulsar_residue")
+            >= 2000
+            and self.current_location.storage.get_item(self.name, "rare_earth_minerals")
             >= 1500
-            and self.current_location.storage.get_item(self, "voidium") >= 2200
+            and self.current_location.storage.get_item(self.name, "voidium") >= 2200
             else 0
         )
 
@@ -1655,24 +1864,31 @@ class Player:
             1
             if self.current_location.has_factory()
             and self.current_location.has_storage()
-            and self.current_location.storage.get_item(self, "cosmic_ice") >= 50000
-            and self.current_location.storage.get_item(self, "presolar_grain") >= 80000
-            and self.current_location.storage.get_item(self, "photon_dust") >= 100000
-            and self.current_location.storage.get_item(self, "quantum_foam") >= 120000
-            and self.current_location.storage.get_item(self, "solar_dust") >= 150000
-            and self.current_location.storage.get_item(self, "antigravity_dust")
-            >= 100000
-            and self.current_location.storage.get_item(self, "etherium") >= 120000
-            and self.current_location.storage.get_item(self, "hyperspace_flux") >= 50000
-            and self.current_location.storage.get_item(self, "nullmetal") >= 150000
-            and self.current_location.storage.get_item(self, "rare_earth_minerals")
+            and self.current_location.storage.get_item(self.name, "cosmic_ice") >= 50000
+            and self.current_location.storage.get_item(self.name, "presolar_grain")
             >= 80000
-            and self.current_location.storage.get_item(self, "aetherium") >= 30000
-            and self.current_location.storage.get_item(self, "chronomite") >= 70000
-            and self.current_location.storage.get_item(self, "dimensional_rift_residue")
+            and self.current_location.storage.get_item(self.name, "photon_dust")
+            >= 100000
+            and self.current_location.storage.get_item(self.name, "quantum_foam")
+            >= 120000
+            and self.current_location.storage.get_item(self.name, "solar_dust")
+            >= 150000
+            and self.current_location.storage.get_item(self.name, "antigravity_dust")
+            >= 100000
+            and self.current_location.storage.get_item(self.name, "etherium") >= 120000
+            and self.current_location.storage.get_item(self.name, "hyperspace_flux")
+            >= 50000
+            and self.current_location.storage.get_item(self.name, "nullmetal") >= 150000
+            and self.current_location.storage.get_item(self.name, "rare_earth_minerals")
+            >= 80000
+            and self.current_location.storage.get_item(self.name, "aetherium") >= 30000
+            and self.current_location.storage.get_item(self.name, "chronomite") >= 70000
+            and self.current_location.storage.get_item(
+                self.name, "dimensional_rift_residue"
+            )
             >= 40000
-            and self.current_location.storage.get_item(self, "warpflux") >= 60000
-            and self.current_location.storage.get_item(self, "xylothium") >= 50000
+            and self.current_location.storage.get_item(self.name, "warpflux") >= 60000
+            and self.current_location.storage.get_item(self.name, "xylothium") >= 50000
             else 0
         )
 
@@ -1681,16 +1897,20 @@ class Player:
             1
             if self.current_location.has_factory()
             and self.current_location.has_storage()
-            and self.current_location.storage.get_item(self, "cosmic_resin") >= 4000
-            and self.current_location.storage.get_item(self, "hyper_dust") >= 3000
-            and self.current_location.storage.get_item(self, "presolar_grain") >= 2500
-            and self.current_location.storage.get_item(self, "nebulite") >= 2000
-            and self.current_location.storage.get_item(self, "water_ice") >= 3500
-            and self.current_location.storage.get_item(self, "astralite") >= 1250
-            and self.current_location.storage.get_item(self, "etherium") >= 900
-            and self.current_location.storage.get_item(self, "hyperspace_flux") >= 1000
-            and self.current_location.storage.get_item(self, "pulsar_residue") >= 750
-            and self.current_location.storage.get_item(self, "voidium") >= 1100
+            and self.current_location.storage.get_item(self.name, "cosmic_resin")
+            >= 4000
+            and self.current_location.storage.get_item(self.name, "hyper_dust") >= 3000
+            and self.current_location.storage.get_item(self.name, "presolar_grain")
+            >= 2500
+            and self.current_location.storage.get_item(self.name, "nebulite") >= 2000
+            and self.current_location.storage.get_item(self.name, "water_ice") >= 3500
+            and self.current_location.storage.get_item(self.name, "astralite") >= 1250
+            and self.current_location.storage.get_item(self.name, "etherium") >= 900
+            and self.current_location.storage.get_item(self.name, "hyperspace_flux")
+            >= 1000
+            and self.current_location.storage.get_item(self.name, "pulsar_residue")
+            >= 750
+            and self.current_location.storage.get_item(self.name, "voidium") >= 1100
             else 0
         )
 
@@ -1704,7 +1924,8 @@ class Player:
                 )
                 or (
                     self.current_location.has_storage()
-                    and self.current_location.storage.get_item(self, ship_class) > 0
+                    and self.current_location.storage.get_item(self.name, ship_class)
+                    > 0
                 )
             )
             and self.spaceship.ship_class != ship_class
@@ -1868,6 +2089,7 @@ class Player:
             "can_sell": self.can_sell(),
             "can_invest_factory": self.can_invest_factory(),
             "can_invest_drydock": self.can_invest_drydock(),
+            "can_invest_marketplace": self.can_invest_marketplace(),
             "can_collect": self.can_collect(),
             "can_mission": self.can_mission(),
             "can_repair": self.can_repair(),

@@ -146,7 +146,7 @@ class MissionCenter(Building):
                     result = 0
                 else:
                     mission.status = MissionStatus.COMPLETED
-                    player.wallet += mission.reward
+                    player.earn(mission.reward)
                     player.mission_completed += 1
                     player.universe.total_mission_completed += 1
                     player.skills["missioning"] = (
@@ -206,6 +206,9 @@ class MissionCenter(Building):
             mission for mission in self.missions if mission.status == MissionStatus.OPEN
         ]
         logger.debug(f"Cleaned up missions in {self.name}")
+
+    def destroy(self):
+        pass
 
     def reset(self):
         self._hull = self._max_hull

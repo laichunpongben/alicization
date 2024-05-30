@@ -8,13 +8,17 @@ import numpy as np
 
 from .star_system import StarSystem
 from .locations.stargate import Stargate
+from .managers.time_keeper import TimeKeeper
 from .managers.material_manager import MaterialManager
 from .managers.spaceship_manager import SpaceshipManager
+from .managers.economy import Economy
 
 logger = logging.getLogger(__name__)
 
+time_keeper = TimeKeeper()
 material_manager = MaterialManager()
 spaceship_manager = SpaceshipManager()
+economy = Economy()
 
 MAX_CONNECTIONS = 5
 MIN_CONNECTIONS = 1
@@ -22,7 +26,6 @@ MIN_CONNECTIONS = 1
 
 class Universe:
     def __init__(self, initial_systems):
-        self.current_turn = 1
         self.star_systems = []
         self._players = []
 
@@ -30,11 +33,13 @@ class Universe:
         self.total_damage_dealt = 0
         self.total_kill = 0
         self.total_destroy = 0
-        self.total_money_spent = 0
+        self.total_earning = 0
+        self.total_spending = 0
         self.total_build = 0
         self.total_mined = 0
         self.total_mission_completed = 0
-        self.global_price_index = 1
+        self.total_transaction = 0
+        self.galactic_price_index = 1
 
         for _ in range(initial_systems):
             self.add_star_system()
@@ -45,17 +50,11 @@ class Universe:
     def players(self):
         return self._players
 
-    @players.setter
-    def players(self, value):
-        if not isinstance(value, list):
-            raise ValueError("Players must be a list")
-        self._players = value
-
     def add_player(self, player):
-        self.players.append(player)
+        self._players.append(player)
 
     def remove_player(self, player):
-        self.players.remove(player)
+        self._players.remove(player)
 
     def add_star_system(self):
         new_system = StarSystem(f"System {len(self.star_systems)}")
@@ -146,14 +145,13 @@ class Universe:
         return distances[end_system]
 
     def health_check(self):
-        self.current_turn += 1
         expand_threshold_small = 2 ** (len(self.star_systems) / 2)
         expand_threshold_large = 2 ** len(self.star_systems)
         if (
             self.total_distance_traveled >= expand_threshold_small
             or self.total_kill * 10 >= expand_threshold_small
             or self.total_damage_dealt >= expand_threshold_large
-            or self.total_money_spent >= expand_threshold_large
+            or self.total_spending >= expand_threshold_large
         ):
             self.expand_universe()
 
@@ -169,6 +167,9 @@ class Universe:
                     for spaceship in spaceships:
                         spaceship.recharge_shield()
 
+                planet.marketplace.match_orders()
+                planet.marketplace.clean_up()
+
             for moon in system.moons:
                 for building in moon.buildings:
                     building.repair()
@@ -182,13 +183,20 @@ class Universe:
 
             system.debrises = [d for d in system.debrises if not d.is_empty()]
 
-        self.global_price_index = self.calculate_global_price_index()
+        self.total_transaction = economy.total_transaction
+        self.galactic_price_index = economy.calculate_galactic_price_index()
+        self.galactic_affordability = self.calculate_galactic_affordability()
+        self.galactic_productivity = self.calculate_galactic_productivity()
+
+        time_keeper.tick()
 
     def expand_universe(self):
         self.add_star_system()
         new_system = self.star_systems[-1]
         connected_systems = [
-            s for s in self.star_systems if len(s.stargates) < MAX_CONNECTIONS
+            s
+            for s in self.star_systems
+            if s != new_system and len(s.stargates) < MAX_CONNECTIONS
         ]
 
         if connected_systems:
@@ -220,65 +228,23 @@ class Universe:
     def get_random_system_with_planet(self):
         return random.choice([sys for sys in self.star_systems if len(sys.planets) > 0])
 
-    def calculate_global_price_index(self):
-        markets = []
-        for system in self.star_systems:
-            for planet in system.planets:
-                markets.append(planet.marketplace)
-
-        average_prices = {}
-        total_deviation = 0
-        num_items = 0
-
-        for market in markets:
-            for item_type, data in market.inventory.items():
-                if item_type not in average_prices:
-                    average_prices[item_type] = {"total_price": 0, "total_quantity": 0}
-
-                total_quantity = data["quantity"]
-                total_price = data["price"] * total_quantity
-
-                average_prices[item_type]["total_price"] += total_price
-                average_prices[item_type]["total_quantity"] += total_quantity
-
-                # If total quantity is 0, assume average price is base price
-                if total_quantity == 0:
-                    material = material_manager.get_material(item_type)
-                    spaceship = spaceship_manager.get_spaceship(item_type)
-                    if material:
-                        base_price = material_manager.guess_base_price(material.rarity)
-                    elif spaceship:
-                        base_price = spaceship.base_price
-                    else:
-                        continue
-                    average_prices[item_type]["total_price"] += base_price
-                    average_prices[item_type]["total_quantity"] += 1
-
-        for item_type, avg_price_data in average_prices.items():
-            material = material_manager.get_material(item_type)
-            spaceship = spaceship_manager.get_spaceship(item_type)
-            if material:
-                base_price = material_manager.guess_base_price(material.rarity)
-            elif spaceship:
-                base_price = spaceship.base_price
-            else:
-                continue
-
-            average_price = (
-                avg_price_data["total_price"] / avg_price_data["total_quantity"]
-            )
-            deviation = average_price / base_price
-            total_deviation += deviation
-            num_items += 1
-
-        if num_items == 0:
-            return 1  # Default index if no items found
-        else:
-            return total_deviation / num_items
-
     def full_check_all_players(self):
         for player in self._players:
             player.total_investment = player.calculate_total_investment()
+
+    def calculate_galactic_affordability(self):
+        return (
+            sum(player.affordability for player in self._players) / len(self._players)
+            if len(self._players) > 0
+            else 1
+        )
+
+    def calculate_galactic_productivity(self):
+        return (
+            sum(player.productivity for player in self._players) / len(self._players)
+            if len(self._players) > 0
+            else 1
+        )
 
     def debug_print(self):
         logger.info("Universe Debug Information:")
@@ -297,9 +263,13 @@ class Universe:
             "totalDamageDealt": self.total_damage_dealt,
             "totalKill": self.total_kill,
             "totalDestroy": self.total_destroy,
-            "totalMoneySpent": self.total_money_spent,
+            "totalEarning": self.total_earning,
+            "totalSpending": self.total_spending,
             "totalBuild": self.total_build,
             "totalMined": self.total_mined,
             "totalMissionCompleted": self.total_mission_completed,
-            "globalPriceIndex": self.global_price_index,
+            "totalTransaction": self.total_transaction,
+            "galacticPriceIndex": self.galactic_price_index,
+            "galacticAffordability": self.galactic_affordability,
+            "galacticProductivity": self.galactic_productivity,
         }

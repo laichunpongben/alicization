@@ -44,3 +44,4 @@ class Action(Enum):
     BUY_MINING_SPACESHIP = "buy_mining_spaceship"  # 37
     SELL_MINING_SPACESHIP = "sell_mining_spaceship"  # 38
     LOAD = "load"  # 39
+    INVEST_MARKETPLACE = "invest_marketplace"  # 40

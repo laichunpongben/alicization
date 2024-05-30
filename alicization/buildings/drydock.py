@@ -5,6 +5,7 @@ from collections import defaultdict
 import logging
 
 from .building import Building
+from .investable import Investable
 from ..managers.blueprint_manager import BlueprintManager
 from ..managers.spaceship_manager import SpaceshipManager
 from ..managers.leaderboard import Leaderboard
@@ -19,21 +20,14 @@ MONOPOLY_THRESHOLD = 0.995
 NUM_BOMBARD_ROUND = 10
 P_BOMBARD_HIT = 0.5
 DESTROY_SCORE = 10000
-BASE_EARNING_RATIO = 0.5
+BASE_EARNING_RATIO = 0.25
 
 
-class Drydock(Building):
+class Drydock(Building, Investable):
     def __init__(self):
-        super().__init__()
+        Building.__init__(self)
+        Investable.__init__(self)
         self.name = f"Drydock {uuid.uuid4().hex}"
-        self.level = 0
-        self.investment = 0
-        self.undistributed_earning = 0
-        self.equities = defaultdict(float)
-        self.earnings = defaultdict(float)
-        self.monopoly = False
-        self.owner = None
-        self.owner_investment = 0
 
     def can_repair(self, player):
         return (
@@ -55,7 +49,8 @@ class Drydock(Building):
             repair_cost = player.spaceship.calc_repair_cost()
             player.spend(repair_cost)
             player.spaceship.repair()
-            self._distribute_earnings(repair_cost)
+            earning = repair_cost * min(BASE_EARNING_RATIO * (1 + self.level * 0.01), 1)
+            self._distribute_earnings(earning)
             logger.info(
                 f"{player.spaceship.ship_class} repaired at {self.name} for {repair_cost}."
             )
@@ -71,7 +66,10 @@ class Drydock(Building):
             upgrade_cost = player.spaceship.calc_upgrade_cost()
             player.spend(upgrade_cost)
             player.spaceship.upgrade()
-            self._distribute_earnings(upgrade_cost)
+            earning = upgrade_cost * min(
+                BASE_EARNING_RATIO * (1 + self.level * 0.01), 1
+            )
+            self._distribute_earnings(earning)
             logger.info(
                 f"{player.spaceship.ship_class} upgraded at {self.name} for {upgrade_cost}."
             )
@@ -84,16 +82,6 @@ class Drydock(Building):
 
     def _calculate_upgrade_cost(self, spaceship):
         return spaceship.base_price * 0.2 * self.level
-
-    def _distribute_earnings(self, amount):
-        earning = amount * min(BASE_EARNING_RATIO * (1 + self.level * 0.01), 1)
-        self.undistributed_earning += earning
-        if sum(self.equities.values()) > 0 and self.investment > 0:
-            for shareholder, equity in self.equities.items():
-                ratio = equity / self.investment
-                self.earnings[shareholder] += max(self.undistributed_earning * ratio, 0)
-            self.undistributed_earning = 0
-            logger.info(f"{self.name} updated earning for {earning}.")
 
     def reset(self):
         self.level = 0

@@ -60,6 +60,9 @@ class PlanetaryDefense(Building):
                 player.die()
                 leaderboard.log_achievement(player.name, "death", 1)
 
+    def destroy(self):
+        pass
+
     def reset(self):
         self._hull = self._max_hull
         self.cooldown = (

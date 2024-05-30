@@ -6,6 +6,7 @@ import random
 import logging
 
 from .building import Building
+from .investable import Investable
 from ..managers.blueprint_manager import BlueprintManager
 from ..managers.spaceship_manager import SpaceshipManager
 from ..managers.leaderboard import Leaderboard
@@ -22,18 +23,11 @@ P_JOB_SUCCESS_BASE = 0.9
 BASE_EARNING_RATIO = 0.5
 
 
-class Factory(Building):
+class Factory(Building, Investable):
     def __init__(self):
         Building.__init__(self)
+        Investable.__init__(self)
         self.name = f"Factory {uuid.uuid4().hex}"
-        self.level = 0
-        self.investment = 0
-        self.undistributed_earning = 0
-        self.equities = defaultdict(float)
-        self.earnings = defaultdict(float)
-        self.monopoly = False
-        self.owner = None
-        self.owner_investment = 0
 
     def manufacture(self, player, blueprint_name):
         if self._cooldown > 0:
@@ -50,18 +44,19 @@ class Factory(Building):
 
         missing_materials = []
         for material, qty in blueprint.components.items():
-            if player.current_location.storage.get_item(player, material) < qty:
+            if player.current_location.storage.get_item(player.name, material) < qty:
                 missing_materials.append((material, qty))
 
         if player.wallet >= job_cost and not missing_materials:
             for material, qty in blueprint.components.items():
-                player.current_location.storage.remove_item(player, material, qty)
+                player.current_location.storage.remove_item(player.name, material, qty)
 
             player.spend(job_cost)
-            self._distribute_earnings(job_cost)
+            earning = job_cost * min(BASE_EARNING_RATIO * (1 + self.level * 0.01), 1)
+            self._distribute_earnings(earning)
 
             if self.job_success():
-                player.current_location.storage.add_item(player, blueprint_name, 1)
+                player.current_location.storage.add_item(player.name, blueprint_name, 1)
                 player.build += 1
                 player.universe.total_build += 1
 
