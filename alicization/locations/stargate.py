@@ -1,5 +1,6 @@
 # stargate.py
 
+import math
 import logging
 
 from .location import Location
@@ -28,7 +29,7 @@ class Stargate(Location):
             self.destination.empty_space.add_player(player)
 
         player.distance_traveled += self.distance
-        player.turns_until_idle = self.distance
+        player.turns_until_idle += int(math.ceil(self.distance / min(player.spaceship.engine, 1)))
         player.universe.total_distance_traveled += self.distance
         logger.debug(
             f"{player.name} traveled from {self.origin.name} to {self.destination.name}"

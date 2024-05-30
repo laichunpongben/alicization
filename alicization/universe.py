@@ -219,7 +219,7 @@ class Universe:
                     len(system.stargates) < MAX_CONNECTIONS
                     and len(new_system.stargates) < MAX_CONNECTIONS
                 ):
-                    distance = int(np.random.uniform(1, 10))
+                    distance = random.randint(1, 100)
                     self.connect_systems(system, new_system, distance)
 
         logger.info(f"New star system added: {new_system.name}")

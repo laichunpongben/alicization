@@ -29,7 +29,7 @@ class Spaceship(ABC):
         self._power = 0
         self._weapon = 0
         self._weapon_upgrade = 0
-        self._engine = 0
+        self._engine = 10
         self._evasion = 0
         self._max_cargo_size = 0
         self._base_repair_cost = 0
