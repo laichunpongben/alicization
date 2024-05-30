@@ -30,7 +30,7 @@ economy = Economy()
 
 NUM_TURN_BID_ORDER_EXPIRY = 400
 NUM_TURN_ASK_ORDER_EXPIRY = 100
-BASE_SERVICE_FEE_RATIO = 0.001
+BASE_SERVICE_FEE_RATIO = 0.005
 
 
 @dataclass
@@ -221,6 +221,7 @@ class Marketplace(Building, Investable):
     def cancel_ask_order(self, ask_order):
         storage = location_map.get_location(ask_order.location).storage
         storage.add_item(ask_order.player, ask_order.item_type, ask_order.quantity)
+        self.inventory[ask_order.item_type] -= ask_order.quantity
 
     def clean_up(self):
         for item_type, ask_orders in self.ask_orders.items():

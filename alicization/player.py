@@ -748,7 +748,13 @@ class Player:
             )
             min_price = min(buyout_price * 0.1, MIN_UNIT_PRICE)
 
-            if self.sell(spaceship_class, 1, min_price, buyout_price):
+            max_qty = self.current_location.storage.get_item(self.name, spaceship_class)
+            if max_qty > 1:
+                qty = random.randint(1, max_qty)
+            elif max_qty == 1:
+                qty = 1
+
+            if self.sell(spaceship_class, qty, min_price, buyout_price):
                 logger.info(
                     f"{self.name} sold a {spaceship_class} at {self.current_system.name} - {self.current_location.name}"
                 )
@@ -1073,7 +1079,13 @@ class Player:
                 )
 
                 if ready_to_mission:
-                    action_index_probs.append((14, 1))
+                    if (
+                        isinstance(self.spaceship, Corvette)
+                        and self.spaceship.level < self.spaceship.max_level * 0.75
+                    ):
+                        action_index_probs.append((14, 0.01))
+                    else:
+                        action_index_probs.append((14, 1))
                 action_indexes, probs = zip(*action_index_probs)
                 return random.choices(action_indexes, weights=probs, k=1)[0]
             elif self.goal == Goal.MAX_KILL:
@@ -1516,29 +1528,61 @@ class Player:
 
     def calculate_net_worth(self):
         inventory_worth = self.calculate_inventory_worth()
-        net_worth = self.wallet + self.total_investment * 0.1 + inventory_worth
+        spaceship_worth = self.calculate_spaceship_worth()
+        net_worth = (
+            self.wallet
+            + inventory_worth
+            + spaceship_worth
+            + self.total_investment * 0.1
+        )
         return net_worth
 
     def calculate_inventory_worth(self):
         inventory_worth = 0
-        material_price_cache = {}
+        base_price_cache = {}
         for system in self.universe.star_systems:
             for planet in system.planets:
                 inventory = planet.storage.get_inventory(self.name)
                 for item, quantity in inventory.items():
-                    if item not in material_price_cache:
+                    if item not in base_price_cache:
                         material = material_manager.get_material(item)
                         if material:
-                            base_price_guess = material_manager.guess_base_price(
+                            base_price_cache[item] = material_manager.guess_base_price(
                                 material.rarity
                             )
-                            material_price_cache[item] = (
-                                base_price_guess * self.universe.galactic_price_index
-                            )
                         else:
-                            material_price_cache[item] = 0
-                    inventory_worth += material_price_cache[item] * quantity
+                            spaceship_info = spaceship_manager.get_spaceship(item)
+                            if spaceship_info:
+                                base_price_cache[item] = spaceship_info.base_price
+                            else:
+                                base_price_cache[item] = MIN_UNIT_PRICE
+                    inventory_worth += (
+                        base_price_cache[item]
+                        * self.universe.galactic_price_index
+                        * quantity
+                    )
         return inventory_worth
+
+    def calculate_spaceship_worth(self):
+        spaceship_worth = 0
+        base_price_cache = {}
+        for system in self.universe.star_systems:
+            locations = system.planets + system.moons
+            for location in locations:
+                spaceships = location.hangar.get_spaceships(self)
+                for spaceship in spaceships:
+                    ship_class = spaceship.ship_class
+                    if ship_class not in base_price_cache:
+                        spaceship_info = spaceship_manager.get_spaceship(ship_class)
+                        if spaceship_info:
+                            base_price_cache[ship_class] = spaceship_info.base_price
+                        else:
+                            base_price_cache[ship_class] = MIN_UNIT_PRICE
+                    spaceship_worth += (
+                        base_price_cache[ship_class]
+                        * self.universe.galactic_price_index
+                    )
+        return spaceship_worth
 
     def calculate_roi(self):
         if self.total_investment > 0:
