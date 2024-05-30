@@ -3,6 +3,7 @@
 import csv
 from dataclasses import dataclass
 from pathlib import Path
+import random
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class MaterialManager:
                 materials_file = (
                     Path(__file__).resolve().parent.parent / "data" / "materials.csv"
                 )
-            cls.__instance.materials = cls.__instance._load_materials(materials_file)
+            cls.__instance._materials = cls.__instance._load_materials(materials_file)
         return cls.__instance
 
     def _load_materials(self, materials_file):
@@ -40,8 +41,11 @@ class MaterialManager:
                 )
         return materials
 
+    def get_all_meterials(self):
+        return list(self._materials.values())
+
     def get_material(self, name):
-        return self.materials.get(name)
+        return self._materials.get(name)
 
     def get_rarity(self, name):
         material = self.get_material(name)
@@ -52,3 +56,8 @@ class MaterialManager:
 
     def guess_base_price(self, rarity):
         return 2 ** (max(rarity - 1, 0))
+
+    def random_material(self, max_rarity=5):
+        return random.choice(
+            [m for m in self._materials.values() if m.rarity <= max_rarity]
+        )
