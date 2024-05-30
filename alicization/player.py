@@ -559,7 +559,15 @@ class Player:
             logger.warning("Cannot upgrade spaceship from this location.")
 
     def attack(self, target_player):
-        if random.random() < target_player.spaceship.evasion:
+        if random.random() < max(
+            min(
+                1
+                - target_player.spaceship.evasion
+                * (1 + target_player.spaceship.level * 0.001),
+                1,
+            ),
+            0,
+        ):
             damage = (
                 np.random.binomial(
                     NUM_ATTACK_ROUND,
@@ -1035,32 +1043,51 @@ class Player:
                 if self.can_set_home():
                     action_index_probs.append((22, 0.0005))
 
-                if self.can_buy_spaceship("destroyer"):
+                if (
+                    self.can_buy_spaceship("destroyer")
+                    and self.wallet >= 3500000
+                    and not isinstance(self.spaceship, Destroyer)
+                ):
                     action_index_probs.append((49, 0.2))
-                elif self.can_buy_spaceship("frigate"):
+                if (
+                    self.can_buy_spaceship("frigate")
+                    and self.wallet >= 70000
+                    and not isinstance(self.spaceship, Frigate)
+                ):
                     action_index_probs.append((48, 0.2))
-                elif self.can_buy_spaceship("corvette"):
+                if (
+                    self.can_buy_spaceship("corvette")
+                    and self.wallet >= 1400
+                    and not isinstance(self.spaceship, Corvette)
+                ):
                     action_index_probs.append((23, 0.2))
+                if (
+                    self.can_buy_spaceship("courier")
+                    and self.wallet >= 1400
+                    and not isinstance(self.spaceship, Courier)
+                ):
+                    action_index_probs.append((45, 0.1))
 
                 if self.can_pilot_corvette():
-                    if isinstance(self.spaceship, Explorer):
+                    if (isinstance(self.spaceship, (Explorer, Miner, Courier))) or (
+                        isinstance(self.spaceship, (Frigate, Destroyer))
+                        and self.spaceship.is_damaged()
+                        and self.wallet <= self.spaceship.calc_repair_cost()
+                    ):
                         action_index_probs.append((29, 1))
-                    else:
-                        if (
-                            self.spaceship.is_damaged()
-                            and self.wallet <= self.spaceship.calc_repair_cost()
-                        ):
-                            action_index_probs.append((29, 0.1))
 
                 if self.can_pilot_frigate() and self.wallet >= 500000:
                     action_index_probs.append((30, 1))
                 if self.can_pilot_destroyer() and self.wallet >= 1250000:
                     action_index_probs.append((34, 1))
+                if self.can_pilot_courier():
+                    action_index_probs.append((47, 0.01))
 
                 ready_to_mission = (
                     self.can_mission()
                     and isinstance(
-                        self.spaceship, (Destroyer, Frigate, Corvette, Explorer)
+                        self.spaceship,
+                        (Destroyer, Frigate, Corvette, Explorer, Courier),
                     )
                     and math.isclose(self.spaceship.armor, self.spaceship.max_armor)
                     and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
@@ -1115,16 +1142,42 @@ class Player:
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
 
-                if self.can_buy_spaceship("destroyer"):
+                if (
+                    self.can_buy_spaceship("destroyer")
+                    and self.wallet >= 3500000
+                    and not isinstance(self.spaceship, Destroyer)
+                ):
                     action_index_probs.append((49, 0.2))
-                elif self.can_buy_spaceship("frigate"):
+                if (
+                    self.can_buy_spaceship("frigate")
+                    and self.wallet >= 70000
+                    and not isinstance(self.spaceship, Frigate)
+                ):
                     action_index_probs.append((48, 0.2))
-                elif self.can_buy_spaceship("corvette"):
+                if (
+                    self.can_buy_spaceship("corvette")
+                    and self.wallet >= 1400
+                    and not isinstance(self.spaceship, Corvette)
+                ):
                     action_index_probs.append((23, 0.2))
+                if (
+                    self.can_buy_spaceship("courier")
+                    and self.wallet >= 1400
+                    and not isinstance(self.spaceship, Courier)
+                ):
+                    action_index_probs.append((45, 0.1))
 
-                if self.can_buy_spaceship("extractor"):
+                if (
+                    self.can_buy_spaceship("extractor")
+                    and self.wallet >= 35000
+                    and not isinstance(self.spaceship, Extractor)
+                ):
                     action_index_probs.append((50, 0.0001))
-                elif self.can_buy_spaceship("miner"):
+                if (
+                    self.can_buy_spaceship("miner")
+                    and self.wallet >= 700
+                    and not isinstance(self.spaceship, Miner)
+                ):
                     action_index_probs.append((37, 0.0001))
 
                 if self.can_pilot_miner() and (
@@ -1146,7 +1199,7 @@ class Player:
                     action_index_probs.append((36, 0.02))
 
                 if self.can_pilot_corvette():
-                    if (isinstance(self.spaceship, (Explorer, Miner))) or (
+                    if (isinstance(self.spaceship, (Explorer, Miner, Courier))) or (
                         isinstance(self.spaceship, (Frigate, Destroyer))
                         and self.spaceship.is_damaged()
                         and self.wallet <= self.spaceship.calc_repair_cost()
@@ -1156,11 +1209,14 @@ class Player:
                     action_index_probs.append((30, 1))
                 if self.can_pilot_destroyer():
                     action_index_probs.append((34, 1))
+                if self.can_pilot_courier():
+                    action_index_probs.append((47, 0.001))
 
                 ready_to_mission = (
                     self.can_mission()
                     and isinstance(
-                        self.spaceship, (Destroyer, Frigate, Corvette, Explorer)
+                        self.spaceship,
+                        (Destroyer, Frigate, Corvette, Explorer, Courier),
                     )
                     and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
                     and math.isclose(self.spaceship.armor, self.spaceship.max_armor)
@@ -1216,16 +1272,42 @@ class Player:
                 if self.can_collect():
                     action_index_probs.append((13, 0.001))
 
-                if self.can_buy_spaceship("destroyer"):
+                if (
+                    self.can_buy_spaceship("destroyer")
+                    and self.wallet >= 3500000
+                    and not isinstance(self.spaceship, Destroyer)
+                ):
                     action_index_probs.append((49, 0.2))
-                elif self.can_buy_spaceship("frigate"):
+                if (
+                    self.can_buy_spaceship("frigate")
+                    and self.wallet >= 70000
+                    and not isinstance(self.spaceship, Frigate)
+                ):
                     action_index_probs.append((48, 0.2))
-                elif self.can_buy_spaceship("corvette"):
+                if (
+                    self.can_buy_spaceship("corvette")
+                    and self.wallet >= 1400
+                    and not isinstance(self.spaceship, Corvette)
+                ):
                     action_index_probs.append((23, 0.2))
+                if (
+                    self.can_buy_spaceship("courier")
+                    and self.wallet >= 1400
+                    and not isinstance(self.spaceship, Courier)
+                ):
+                    action_index_probs.append((45, 0.1))
 
-                if self.can_buy_spaceship("extractor"):
+                if (
+                    self.can_buy_spaceship("extractor")
+                    and self.wallet >= 35000
+                    and not isinstance(self.spaceship, Extractor)
+                ):
                     action_index_probs.append((50, 0.0001))
-                elif self.can_buy_spaceship("miner"):
+                if (
+                    self.can_buy_spaceship("miner")
+                    and self.wallet >= 700
+                    and not isinstance(self.spaceship, Miner)
+                ):
                     action_index_probs.append((37, 0.0001))
 
                 if self.can_pilot_miner() and (
@@ -1247,7 +1329,7 @@ class Player:
                     action_index_probs.append((36, 0.02))
 
                 if self.can_pilot_corvette():
-                    if (isinstance(self.spaceship, (Explorer, Miner))) or (
+                    if (isinstance(self.spaceship, (Explorer, Miner, Courier))) or (
                         isinstance(self.spaceship, (Frigate, Destroyer))
                         and self.spaceship.is_damaged()
                         and self.wallet <= self.spaceship.calc_repair_cost()
@@ -1258,11 +1340,14 @@ class Player:
                     action_index_probs.append((30, 1))
                 if self.can_pilot_destroyer():
                     action_index_probs.append((34, 1))
+                if self.can_pilot_courier():
+                    action_index_probs.append((47, 0.001))
 
                 ready_to_mission = (
                     self.can_mission()
                     and isinstance(
-                        self.spaceship, (Destroyer, Frigate, Corvette, Explorer)
+                        self.spaceship,
+                        (Destroyer, Frigate, Corvette, Explorer, Courier),
                     )
                     and math.isclose(self.spaceship.armor, self.spaceship.max_armor)
                     and math.isclose(self.spaceship.hull, self.spaceship.max_hull)
@@ -1332,6 +1417,8 @@ class Player:
                     action_index_probs.append((41, 0.2))
                 if self.can_sell_spaceship("destroyer"):
                     action_index_probs.append((42, 0.2))
+                if self.can_sell_spaceship("courier"):
+                    action_index_probs.append((46, 0.2))
                 if self.can_sell_spaceship("miner"):
                     action_index_probs.append((38, 0.001))
                 if self.can_sell_spaceship("extractor"):
@@ -1368,7 +1455,7 @@ class Player:
                 if self.can_build_miner():
                     action_index_probs.append((25, 0.01))
                 if self.can_build_courier():
-                    action_index_probs.append((44, 0.01))
+                    action_index_probs.append((44, 0.001))
 
                 if self.can_pilot_miner() and not isinstance(self.spaceship, Extractor):
                     action_index_probs.append((28, 1))
@@ -1379,10 +1466,10 @@ class Player:
                     self.spaceship, Extractor
                 ):
                     action_index_probs.append((50, 0.02))
-                elif self.can_buy_spaceship("miner") and not isinstance(
+                if self.can_buy_spaceship("miner") and not isinstance(
                     self.spaceship, Miner
                 ):
-                    action_index_probs.append((37, 0.02))
+                    action_index_probs.append((37, 0.01))
 
                 if self.wallet < 10000:
                     if isinstance(self.spaceship, (Miner, Extractor)):
@@ -1957,12 +2044,12 @@ class Player:
             1
             if self.current_location.has_factory()
             and self.current_location.has_storage()
-            and self.current_location.storage.get_item(self.name, "hyper_dust") >= 70
+            and self.current_location.storage.get_item(self.name, "hyper_dust") >= 140
             and self.current_location.storage.get_item(self.name, "nebular_energy")
-            >= 180
-            and self.current_location.storage.get_item(self.name, "nebulite") >= 35
-            and self.current_location.storage.get_item(self.name, "stellar_dust") >= 160
-            and self.current_location.storage.get_item(self.name, "water_ice") >= 55
+            >= 360
+            and self.current_location.storage.get_item(self.name, "nebulite") >= 70
+            and self.current_location.storage.get_item(self.name, "stellar_dust") >= 320
+            and self.current_location.storage.get_item(self.name, "water_ice") >= 110
             else 0
         )
 

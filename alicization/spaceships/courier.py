@@ -8,8 +8,8 @@ class Courier(Spaceship):
         Spaceship.__init__(self)
         self._ship_class = "courier"
         self._max_shield = 50
-        self._shield = 50
-        self._shield_upgrade = 5
+        self._shield = 200
+        self._shield_upgrade = 20
         self._max_armor = 50
         self._armor = 50
         self._armor_upgrade = 5
@@ -23,7 +23,7 @@ class Courier(Spaceship):
         self._engine = 20
         self._evasion = 0.8
         self._max_cargo_size = 10000
-        self._base_repair_cost = 100
-        self._base_upgrade_cost = 200
-        self._max_level = 10
+        self._base_repair_cost = 200
+        self._base_upgrade_cost = 400
+        self._max_level = 20
         self._mining = 0

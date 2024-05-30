@@ -44,8 +44,8 @@ destroyer,chronomite,70000
 destroyer,dimensional_rift_residue,40000
 destroyer,warpflux,60000
 destroyer,xylothium,50000
-courier,hyper_dust,70
-courier,nebular_energy,180
-courier,nebulite,35
-courier,stellar_dust,160
-courier,water_ice,55
+courier,hyper_dust,140
+courier,nebular_energy,360
+courier,nebulite,70
+courier,stellar_dust,320
+courier,water_ice,110
