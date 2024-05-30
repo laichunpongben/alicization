@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 class EmptySpace(Location):
     def __init__(self):
-        super().__init__()
-        self.name = f"Empty Space {uuid.uuid4().hex}"
+        name = f"Empty Space {uuid.uuid4().hex}"
+        Location.__init__(self, name)
 
     def debug_print(self):
         logger.info(f"Empty Space: {self.name}")

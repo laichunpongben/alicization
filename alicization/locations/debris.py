@@ -34,6 +34,7 @@ class Debris(Location):
                 player.spaceship.cargo_hold[item] += count
                 self.resources.pop(item)
                 player.salvage_completed += 1
+                player.turn_material_gain += count
                 player.skills["salvaging"] = (
                     int(math.log(player.salvage_completed) / math.log(math.sqrt(2)))
                     if player.salvage_completed > 0

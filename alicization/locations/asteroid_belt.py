@@ -29,15 +29,14 @@ MAX_QTY = 1e12
 
 
 class AsteroidBelt(Location, Mineable):
-    def __init__(self, name):
+    def __init__(self):
         Location.__init__(self)
         Mineable.__init__(self)
-        self.name = name
         self.resources = self.load_initial_resources()
 
     def load_initial_resources(self):
         resources = {}
-        available_materials = list(material_manager.materials.values())
+        available_materials = material_manager.get_all_meterials()
         sorted_materials = sorted(available_materials, key=lambda x: x.rarity)
 
         probabilities = []
@@ -93,6 +92,7 @@ class AsteroidBelt(Location, Mineable):
 
         player.mining_completed += 1
         player.mined += mined_amount
+        player.turn_material_gain += mined_amount
         player.universe.total_mined += mined_amount
         player.skills["mining"] = (
             int(math.log(player.mining_completed) / math.log(math.sqrt(2)))

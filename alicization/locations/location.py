@@ -1,6 +1,7 @@
 # location.py
 
 from abc import ABC, abstractmethod
+import uuid
 import logging
 
 from ..buildings.hangar import Hangar
@@ -9,34 +10,35 @@ from ..buildings.storage import Storage
 from ..buildings.marketplace import Marketplace
 from ..buildings.mission_center import MissionCenter
 from ..buildings.factory import Factory
+from ..managers.location_map import LocationMap
+
 
 logger = logging.getLogger(__name__)
 
+location_map = LocationMap()
+
 
 class Location(ABC):
-    def __init__(self):
+    def __init__(self, name=None):
+        if name is not None:
+            self._name = name
+        else:
+            self._name = uuid.uuid4().hex
         self._players = []
         self._buildings = []
+        location_map.add_location(self)
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def players(self):
         return self._players
 
-    @players.setter
-    def players(self, value):
-        if not isinstance(value, list):
-            raise ValueError("Players must be a list")
-        self._players = value
-
     @property
     def buildings(self):
         return self._buildings
-
-    @buildings.setter
-    def buildings(self, value):
-        if not isinstance(value, list):
-            raise ValueError("Buildings must be a list")
-        self._buildings = value
 
     def add_player(self, player):
         self.players.append(player)

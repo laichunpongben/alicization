@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 
 class Stargate(Location):
     def __init__(self, origin, destination, distance):
-        Location.__init__(self)
+        name = f"Stargate: {origin.name} -> {destination.name}"
+        Location.__init__(self, name)
         self.origin = origin
         self.destination = destination
         self.distance = distance
@@ -40,12 +41,8 @@ class Stargate(Location):
                     return stargate
         return None
 
-    @property
-    def name(self):
-        return str(self)
-
     def __str__(self):
-        return f"Stargate: {self.origin.name} -> {self.destination.name}"
+        return self.name
 
     def to_json(self):
         return {"origin": self.origin.name, "destination": self.destination.name}

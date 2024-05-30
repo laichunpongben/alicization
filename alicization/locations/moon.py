@@ -21,10 +21,9 @@ BASE_MINE_AMOUNT = 100
 
 
 class Moon(Location, Mineable):
-    def __init__(self, name):
+    def __init__(self):
         Location.__init__(self)
         Mineable.__init__(self)
-        self.name = name
         self.resources = self.load_initial_resources()
         self.hangar = Hangar()
         self.drydock = Drydock()
@@ -74,6 +73,7 @@ class Moon(Location, Mineable):
 
         player.mining_completed += 1
         player.mined += mined_amount
+        player.turn_material_gain += mined_amount
         player.universe.total_mined += mined_amount
         player.skills["mining"] = (
             int(math.log(player.mining_completed) / math.log(math.sqrt(2)))

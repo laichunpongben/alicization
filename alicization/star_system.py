@@ -8,25 +8,20 @@ from .locations.moon import Moon
 from .locations.asteroid_belt import AsteroidBelt
 from .locations.debris import Debris
 from .locations.empty_space import EmptySpace
-from .managers.material_manager import MaterialManager
 
 logger = logging.getLogger(__name__)
-
-material_manager = MaterialManager()
 
 
 class StarSystem:
     def __init__(self, name):
         self.name = name
-        self.planets = [Planet(f"Planet {i}") for i in range(random.randint(0, 5))]
+        self.planets = [Planet() for _ in range(random.randint(0, 5))]
         self.moons = (
-            [Moon(f"Moon {i}") for i in range(random.randint(0, 5))]
+            [Moon() for _ in range(random.randint(0, 5))]
             if len(self.planets) > 0
             else []
         )
-        self.asteroid_belts = [
-            AsteroidBelt(f"Asteroid Belt {i}") for i in range(random.randint(1, 10))
-        ]
+        self.asteroid_belts = [AsteroidBelt() for _ in range(random.randint(1, 10))]
         self.debrises = []
         self.empty_space = EmptySpace()
         self._players = []
@@ -37,20 +32,14 @@ class StarSystem:
     def players(self):
         return self._players
 
-    @players.setter
-    def players(self, value):
-        if not isinstance(value, list):
-            raise ValueError("Players must be a list")
-        self._players = value
-
     def add_player(self, player):
-        self.players.append(player)
+        self._players.append(player)
         player.current_system = self
         self.explored += 1
         player.explored_systems.add(self)
 
     def remove_player(self, player):
-        self.players.remove(player)
+        self._players.remove(player)
         player.current_system = None
 
     def add_stargate(self, stargate):
