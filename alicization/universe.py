@@ -39,6 +39,7 @@ class Universe:
         self.total_mined = 0
         self.total_mission_completed = 0
         self.total_transaction = 0
+        self.total_trade_revenue = 0
         self.galactic_price_index = 1
 
         for _ in range(initial_systems):
@@ -184,6 +185,7 @@ class Universe:
             system.debrises = [d for d in system.debrises if not d.is_empty()]
 
         self.total_transaction = economy.total_transaction
+        self.total_trade_revenue = economy.total_trade_revenue
         self.galactic_price_index = economy.calculate_galactic_price_index()
         self.galactic_affordability = self.calculate_galactic_affordability()
         self.galactic_productivity = self.calculate_galactic_productivity()
@@ -269,6 +271,7 @@ class Universe:
             "totalMined": self.total_mined,
             "totalMissionCompleted": self.total_mission_completed,
             "totalTransaction": self.total_transaction,
+            "totalTradeRevenue": self.total_trade_revenue,
             "galacticPriceIndex": self.galactic_price_index,
             "galacticAffordability": self.galactic_affordability,
             "galacticProductivity": self.galactic_productivity,

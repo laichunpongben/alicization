@@ -1104,7 +1104,7 @@ class Player:
                 if self.can_upgrade():
                     action_index_probs.append((16, 0.03))
                 if self.can_move_planet():
-                    action_index_probs.append((1, 0.05))
+                    action_index_probs.append((1, 0.1))
                 if self.can_move_asteroid_belt():
                     action_index_probs.append((2, 0.01))
                 if self.can_move_moon():
@@ -1124,7 +1124,7 @@ class Player:
                 if self.can_load():
                     action_index_probs.append((39, 0.001))
                 if self.can_sell():
-                    action_index_probs.append((11, 0.2))
+                    action_index_probs.append((11, 0.4))
                 if self.can_buy_warship():
                     action_index_probs.append((23, 0.2))
                 if self.can_buy_mining_spaceship():
@@ -1199,7 +1199,7 @@ class Player:
                 if self.can_upgrade():
                     action_index_probs.append((16, 0.03))
                 if self.can_move_planet():
-                    action_index_probs.append((1, 0.05))
+                    action_index_probs.append((1, 0.1))
                 if self.can_move_asteroid_belt():
                     action_index_probs.append((2, 0.01))
                 if self.can_move_moon():
@@ -1219,7 +1219,7 @@ class Player:
                 if self.can_load():
                     action_index_probs.append((39, 0.001))
                 if self.can_sell():
-                    action_index_probs.append((11, 0.2))
+                    action_index_probs.append((11, 0.4))
                 if self.can_buy_warship():
                     action_index_probs.append((23, 0.2))
                 if self.can_buy_mining_spaceship():
@@ -1334,7 +1334,7 @@ class Player:
                 if self.can_buy_mining_spaceship():
                     action_index_probs.append((37, 0.02))
                 if self.can_sell_warship():
-                    action_index_probs.append((24, 0.03))
+                    action_index_probs.append((24, 0.2))
                 if self.can_sell_mining_spaceship():
                     action_index_probs.append((38, 0.001))
                 if self.can_set_home():

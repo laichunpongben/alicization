@@ -23,6 +23,7 @@ class Economy:
     def __init__(self):
         self._transactions = {}
         self._total_transaction = 0
+        self._total_trade_revenue = 0
         self._total_trade_quantity = defaultdict(int)
         self._weighted_averages = defaultdict(float)
 
@@ -34,12 +35,17 @@ class Economy:
     def total_transaction(self):
         return self._total_transaction
 
+    @property
+    def total_trade_revenue(self):
+        return self._total_trade_revenue
+
     def push_transaction(self, transaction):
         item_type = transaction.item_type
         if item_type not in self._transactions:
             self._transactions[item_type] = deque(maxlen=100)
         self._transactions[item_type].append(transaction)
         self._total_transaction += 1
+        self._total_trade_revenue += transaction.quantity * transaction.price
 
     def calculate_galactic_price_index(self):
         for item_type, transactions in self._transactions.items():
