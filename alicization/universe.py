@@ -22,6 +22,7 @@ economy = Economy()
 
 MAX_CONNECTIONS = 5
 MIN_CONNECTIONS = 1
+MAX_DISTANCE = 100
 
 
 class Universe:
@@ -62,38 +63,20 @@ class Universe:
         self.star_systems.append(new_system)
 
     def create_sparse_graph(self):
-        edges = [
-            (int(np.random.uniform(1, 10)), system1, system2)
-            for i, system1 in enumerate(self.star_systems)
-            for j, system2 in enumerate(self.star_systems)
-            if i < j
-        ]
-        edges.sort(key=lambda x: x[0])
-
-        parent = {system: system for system in self.star_systems}
-        rank = {system: 0 for system in self.star_systems}
-
-        def find(system):
-            if parent[system] != system:
-                parent[system] = find(parent[system])
-            return parent[system]
-
-        def union(system1, system2):
-            root1 = find(system1)
-            root2 = find(system2)
-            if root1 != root2:
-                if rank[root1] > rank[root2]:
-                    parent[root2] = root1
-                else:
-                    parent[root1] = root2
-                    if rank[root1] == rank[root2]:
-                        rank[root2] += 1
-
+        # Use Prim's algorithm to create a Minimum Spanning Tree (MST)
         mst_edges = []
-        for distance, system1, system2 in edges:
-            if find(system1) != find(system2):
-                union(system1, system2)
-                mst_edges.append((distance, system1, system2))
+        visited = set()
+        min_heap = [(0, random.choice(self.star_systems), None)]
+
+        while min_heap and len(mst_edges) < len(self.star_systems) - 1:
+            weight, current_system, previous_system = heapq.heappop(min_heap)
+            if current_system not in visited:
+                visited.add(current_system)
+                if previous_system is not None:
+                    mst_edges.append((weight, previous_system, current_system))
+                for neighbor in self.star_systems:
+                    if neighbor != current_system and neighbor not in visited:
+                        heapq.heappush(min_heap, (random.randint(1, MAX_DISTANCE), neighbor, current_system))
 
         for system in self.star_systems:
             system.stargates = []
@@ -102,12 +85,13 @@ class Universe:
             self.connect_systems(system1, system2, distance)
 
         remaining_edges = [
-            (distance, system1, system2)
-            for distance, system1, system2 in edges
-            if (system1, system2) not in mst_edges
+            (random.randint(1, 10), system1, system2)
+            for system1 in self.star_systems
+            for system2 in self.star_systems
+            if system1 != system2 and (system1, system2) not in mst_edges
         ]
-        additional_edges = min(len(remaining_edges), int(0.1 * len(self.star_systems)))
 
+        additional_edges = min(len(remaining_edges), int(0.1 * len(self.star_systems)))
         for _ in range(additional_edges):
             if remaining_edges:
                 distance, system1, system2 = random.choice(remaining_edges)
@@ -219,7 +203,7 @@ class Universe:
                     len(system.stargates) < MAX_CONNECTIONS
                     and len(new_system.stargates) < MAX_CONNECTIONS
                 ):
-                    distance = random.randint(1, 100)
+                    distance = random.randint(1, MAX_DISTANCE)
                     self.connect_systems(system, new_system, distance)
 
         logger.info(f"New star system added: {new_system.name}")
