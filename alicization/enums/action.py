@@ -55,3 +55,5 @@ class Action(Enum):
     BUY_FRIGATE = "buy_frigate"  # 48
     BUY_DESTROYER = "buy_destroyer"  # 49
     BUY_EXTRACTOR = "buy_extractor"  # 50
+    BUY_MATERIAL_LOW = "buy_material_low"  # 51
+    SELL_MATERIAL_HIGH = "sell_material_high"  # 52

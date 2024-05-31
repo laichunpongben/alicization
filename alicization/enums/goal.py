@@ -13,3 +13,4 @@ class Goal(Enum):
     MAX_BOUNTY = 6
     MAX_BUILD = 7
     MAX_MISSION = 8
+    MAX_LOCAL_TRADE = 9

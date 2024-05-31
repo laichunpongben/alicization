@@ -287,6 +287,12 @@ class Game:
                 control=Control.SYMBOLIC_AI,
                 goal=Goal.MAX_BUILD,
             ),
+            "symbolic_maxlocaltrade1": Player(
+                "Trader 1",
+                self.universe,
+                control=Control.SYMBOLIC_AI,
+                goal=Goal.MAX_LOCAL_TRADE,
+            ),
         }
         self.game_state_queue = asyncio.Queue()
 

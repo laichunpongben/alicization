@@ -93,6 +93,8 @@ ACTION_ENUMS = [
     Action.BUY_FRIGATE,
     Action.BUY_DESTROYER,
     Action.BUY_EXTRACTOR,
+    Action.BUY_MATERIAL_LOW,
+    Action.SELL_MATERIAL_HIGH,
 ]
 ACTIONS = [action.value for action in ACTION_ENUMS]
 NUM_ATTACK_ROUND = 10
@@ -321,6 +323,43 @@ class Player:
                 self.buy(material.name, qty_buy, bid_price)
             elif max_qty == 1:
                 self.buy(material.name, 1, bid_price)
+
+    def buy_material(self, max_rarity, margin):
+        if self.can_buy_material_low():
+            material = material_manager.random_material(max_rarity=max_rarity)
+            base_price = material_manager.guess_base_price(material.rarity)
+            bid_price = max(
+                round(base_price * self.affordability * (1 + margin), 4), MIN_UNIT_PRICE
+            )
+            spend_factor = 0.1
+            max_qty = max(int(self.wallet * spend_factor / bid_price), 0)
+            self.buy(material.name, max_qty, bid_price)
+
+    def sell_material(self, min_price_ratio, margin):
+        if self.can_sell_material_high():
+            available_resources = [
+                (res, qty)
+                for res, qty in self.current_location.storage.get_inventory(
+                    self.name
+                ).items()
+                if qty > 0
+            ]
+            if available_resources:
+                material_name, qty = random.choice(available_resources)
+                material = material_manager.get_material(material_name)
+                if material:
+                    base_price = material_manager.guess_base_price(material.rarity)
+                    buyout_price = max(
+                        round(base_price / self.productivity * (1 + margin), 4),
+                        MIN_UNIT_PRICE,
+                    )
+                    min_price = max(buyout_price * min_price_ratio, MIN_UNIT_PRICE)
+                    qty_sell = qty
+                    self.sell(material_name, qty_sell, min_price, buyout_price)
+                else:
+                    logger.warning("No available material for selling")
+            else:
+                logger.warning("No available material for selling")
 
     def sell(self, item_type, quantity, min_price, buyout_price):
         if (
@@ -1479,6 +1518,36 @@ class Player:
 
                 action_indexes, probs = zip(*action_index_probs)
                 return random.choices(action_indexes, weights=probs, k=1)[0]
+            elif self.goal == Goal.MAX_LOCAL_TRADE:
+                action_index_probs = []
+
+                if len(self.current_system.planets) != 1 or len(self.current_system.moons) == 0:
+                    if self.can_travel():
+                        action_index_probs.append((6, 1))
+                    if self.can_move_stargate():
+                        action_index_probs.append((4, 0.1))
+                else:
+                    if self.can_set_home() and self.current_system != self.home_system:
+                        action_index_probs.append((22, 1))
+                    if self.can_move_planet():
+                        action_index_probs.append((1, 0.1))
+                    if self.can_move_moon():
+                        action_index_probs.append((3, 0.1))
+                    if self.can_mission() and isinstance(self.spaceship, (Explorer, Courier)):
+                        action_index_probs.append((14, 0.1))
+
+                    # trade
+                    if self.can_buy_material_low():
+                        action_index_probs.append((51, 0.05))
+                    if self.can_sell_material_high():
+                        action_index_probs.append((52, 0.05))
+                    if self.can_build_corvette():
+                        action_index_probs.append((26, 1))
+                    if self.can_sell_spaceship("corvette"):
+                        action_index_probs.append((24, 1))
+
+                action_indexes, probs = zip(*action_index_probs)
+                return random.choices(action_indexes, weights=probs, k=1)[0]
             else:
                 return {
                     0: 1,
@@ -1587,7 +1656,7 @@ class Player:
         elif action == Action.SELL_FRIGATE.value:
             self.sell_spaceship("frigate")
         elif action == Action.SELL_DESTROYER.value:
-            self.sell_spaceship("destoyer")
+            self.sell_spaceship("destroyer")
         elif action == Action.SELL_EXTRACTOR.value:
             self.sell_spaceship("extractor")
         elif action == Action.BUILD_COURIER.value:
@@ -1601,9 +1670,13 @@ class Player:
         elif action == Action.BUY_FRIGATE.value:
             self.buy_spaceship("frigate")
         elif action == Action.BUY_DESTROYER.value:
-            self.buy_spaceship("destoyer")
+            self.buy_spaceship("destroyer")
         elif action == Action.BUY_EXTRACTOR.value:
             self.buy_spaceship("extractor")
+        elif action == Action.BUY_MATERIAL_LOW.value:
+            self.buy_material(1, -0.5)
+        elif action == Action.SELL_MATERIAL_HIGH.value:
+            self.sell_material(0.5, 0.5)
         else:
             logger.error(f"Not matching any action: {action}!!")
         self.action_history[ACTIONS[action_index]] += 1
@@ -1641,10 +1714,12 @@ class Player:
     def calculate_net_worth(self):
         inventory_worth = self.calculate_inventory_worth()
         spaceship_worth = self.calculate_spaceship_worth()
+        marketplace_reserve = self.calculate_marketplace_reserve()
         net_worth = (
             self.wallet
             + inventory_worth
             + spaceship_worth
+            + marketplace_reserve
             + self.total_investment * 0.1
         )
         return net_worth
@@ -1655,21 +1730,22 @@ class Player:
         for system in self.universe.star_systems:
             for planet in system.planets:
                 inventory = planet.storage.get_inventory(self.name)
-                for item, quantity in inventory.items():
-                    if item not in base_price_cache:
-                        material = material_manager.get_material(item)
+                for item_type, quantity in inventory.items():
+                    if item_type not in base_price_cache:
+                        material = material_manager.get_material(item_type)
                         if material:
-                            base_price_cache[item] = material_manager.guess_base_price(
+                            base_price_cache[item_type] = material_manager.guess_base_price(
                                 material.rarity
                             )
                         else:
-                            spaceship_info = spaceship_manager.get_spaceship(item)
+                            spaceship_info = spaceship_manager.get_spaceship(item_type)
                             if spaceship_info:
-                                base_price_cache[item] = spaceship_info.base_price
+                                base_price_cache[item_type] = spaceship_info.base_price
                             else:
-                                base_price_cache[item] = MIN_UNIT_PRICE
+                                logger.error(f"Missing price info: {item_type}")
+                                base_price_cache[item_type] = MIN_UNIT_PRICE
                     inventory_worth += (
-                        base_price_cache[item]
+                        base_price_cache[item_type]
                         * self.universe.galactic_price_index
                         * quantity
                     )
@@ -1689,12 +1765,21 @@ class Player:
                         if spaceship_info:
                             base_price_cache[ship_class] = spaceship_info.base_price
                         else:
+                            logger.error(f"Missing price info: {ship_class}")
                             base_price_cache[ship_class] = MIN_UNIT_PRICE
                     spaceship_worth += (
                         base_price_cache[ship_class]
                         * self.universe.galactic_price_index
                     )
         return spaceship_worth
+    
+    def calculate_marketplace_reserve(self):
+        reserve = 0
+        for system in self.universe.star_systems:
+            for planet in system.planets:
+                marketplace = planet.marketplace
+                reserve += marketplace.wallet[self.name] + marketplace.inventory_estimate[self.name]
+        return reserve
 
     def calculate_roi(self):
         if self.total_investment > 0:
@@ -1837,11 +1922,26 @@ class Player:
             if self.current_location.has_marketplace()
             and self.current_location.has_storage()
             and self.wallet > 0
-            and self.current_location.marketplace.inventory
+            else 0
+        )
+    
+    def can_buy_material_low(self):
+        return (
+            1
+            if self.current_location.has_marketplace()
+            and self.current_location.has_storage()
+            and self.wallet > 0
             else 0
         )
 
     def can_sell(self):
+        return int(
+            self.current_location.has_marketplace()
+            and self.current_location.has_storage()
+            and bool(self.current_location.storage.get_inventory(self.name))
+        )
+    
+    def can_sell_material_high(self):
         return int(
             self.current_location.has_marketplace()
             and self.current_location.has_storage()
@@ -2541,6 +2641,9 @@ class Player:
             "destroy": self.destroy,
             "build": self.build,
             "mined": self.mined,
+            "transaction": self.transaction_completed,
+            "affordability": self.affordability,
+            "productivity": self.productivity,
             "actionHistory": self.action_history,
             "spaceship": self.spaceship.to_json(),
         }

@@ -31,6 +31,7 @@ economy = Economy()
 NUM_TURN_BID_ORDER_EXPIRY = 400
 NUM_TURN_ASK_ORDER_EXPIRY = 100
 BASE_SERVICE_FEE_RATIO = 0.005
+MIN_UNIT_PRICE = 0.01
 
 
 @dataclass
@@ -88,7 +89,8 @@ class Marketplace(Building, Investable):
         Investable.__init__(self)
         self.name = f"Marketplace {uuid.uuid4().hex}"
         self.inventory = defaultdict(int)
-        self.wallet = 0
+        self.wallet = defaultdict(float)
+        self.inventory_estimate = defaultdict(float)
         self.ask_orders = defaultdict(list)
         self.bid_orders = defaultdict(list)
 
@@ -110,7 +112,7 @@ class Marketplace(Building, Investable):
                 player.current_location.name,
             )
             insort(self.bid_orders[item_type], bid_order)
-            self.wallet += cost
+            self.wallet[player.name] += cost
             self._distribute_earnings(service_fee)
             return True
         else:
@@ -133,7 +135,9 @@ class Marketplace(Building, Investable):
                 player.current_location.name,
             )
             insort(self.ask_orders[item_type], ask_order)
-            self.inventory[item_type] += 1
+            self.inventory[item_type] += quantity
+            base_price = self._get_base_price(item_type)
+            self.inventory_estimate[player.name] += quantity * base_price
             return True
         else:
             return False
@@ -162,6 +166,9 @@ class Marketplace(Building, Investable):
         bid_order.quantity -= quantity
         ask_order.quantity -= quantity
 
+        buyer = player_manager.get_player(bid_order.player)
+        seller = player_manager.get_player(ask_order.player)
+
         # delivery
         item_type = bid_order.item_type
         storage = location_map.get_location(bid_order.location).storage
@@ -169,10 +176,8 @@ class Marketplace(Building, Investable):
         self.inventory[item_type] -= quantity
 
         # sales revenue
-        seller = player_manager.get_player(ask_order.player)
         revenue = quantity * price
         seller.earn(revenue)
-        self.wallet -= revenue
         service_fee = (
             revenue
             * BASE_SERVICE_FEE_RATIO
@@ -182,10 +187,13 @@ class Marketplace(Building, Investable):
         self._distribute_earnings(service_fee)
 
         # refund
-        buyer = player_manager.get_player(bid_order.player)
         refund = quantity * max(bid_order.price - price, 0)
         buyer.unspend(refund)
-        self.wallet -= refund
+
+        # reserve release
+        self.wallet[buyer.name] -= revenue + refund
+        base_price = self._get_base_price(item_type)
+        self.inventory_estimate[seller.name] -= quantity * base_price
 
         transaction = Transaction(
             bid_order.item_type,
@@ -216,12 +224,17 @@ class Marketplace(Building, Investable):
         buyer = player_manager.get_player(bid_order.player)
         refund = bid_order.quantity * bid_order.price
         buyer.unspend(refund)
-        self.wallet -= refund
+        self.wallet[buyer.name] -= refund  # reserve release
 
     def cancel_ask_order(self, ask_order):
         storage = location_map.get_location(ask_order.location).storage
-        storage.add_item(ask_order.player, ask_order.item_type, ask_order.quantity)
-        self.inventory[ask_order.item_type] -= ask_order.quantity
+        seller_name = ask_order.player
+        item_type = ask_order.item_type
+        quantity = ask_order.quantity
+        storage.add_item(seller_name, item_type, quantity)
+        self.inventory[item_type] -= quantity
+        base_price = self._get_base_price(item_type)
+        self.inventory_estimate[seller_name] -= quantity * base_price  # reserve release
 
     def clean_up(self):
         for item_type, ask_orders in self.ask_orders.items():
@@ -266,6 +279,21 @@ class Marketplace(Building, Investable):
                     break
                 if bid_order.quantity == 0:
                     bid_orders.remove(bid_order)
+
+    def _get_base_price(self, item_type):
+        material = material_manager.get_material(item_type)
+        if material:
+            base_price = material_manager.guess_base_price(
+                material.rarity
+            )
+        else:
+            spaceship_info = spaceship_manager.get_spaceship(item_type)
+            if spaceship_info:
+                base_price = spaceship_info.base_price
+            else:
+                logger.error(f"Missing price info: {item_type}")
+                base_price = MIN_UNIT_PRICE
+        return base_price
 
     def reset(self):
         self._hull = self._max_hull
