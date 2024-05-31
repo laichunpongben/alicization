@@ -283,9 +283,7 @@ class Marketplace(Building, Investable):
     def _get_base_price(self, item_type):
         material = material_manager.get_material(item_type)
         if material:
-            base_price = material_manager.guess_base_price(
-                material.rarity
-            )
+            base_price = material_manager.guess_base_price(material.rarity)
         else:
             spaceship_info = spaceship_manager.get_spaceship(item_type)
             if spaceship_info:

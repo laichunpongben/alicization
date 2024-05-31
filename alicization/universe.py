@@ -76,7 +76,10 @@ class Universe:
                     mst_edges.append((weight, previous_system, current_system))
                 for neighbor in self.star_systems:
                     if neighbor != current_system and neighbor not in visited:
-                        heapq.heappush(min_heap, (random.randint(1, MAX_DISTANCE), neighbor, current_system))
+                        heapq.heappush(
+                            min_heap,
+                            (random.randint(1, MAX_DISTANCE), neighbor, current_system),
+                        )
 
         for system in self.star_systems:
             system.stargates = []

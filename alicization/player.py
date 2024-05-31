@@ -1521,7 +1521,10 @@ class Player:
             elif self.goal == Goal.MAX_LOCAL_TRADE:
                 action_index_probs = []
 
-                if len(self.current_system.planets) != 1 or len(self.current_system.moons) == 0:
+                if (
+                    len(self.current_system.planets) != 1
+                    or len(self.current_system.moons) == 0
+                ):
                     if self.can_travel():
                         action_index_probs.append((6, 1))
                     if self.can_move_stargate():
@@ -1533,7 +1536,9 @@ class Player:
                         action_index_probs.append((1, 0.1))
                     if self.can_move_moon():
                         action_index_probs.append((3, 0.1))
-                    if self.can_mission() and isinstance(self.spaceship, (Explorer, Courier)):
+                    if self.can_mission() and isinstance(
+                        self.spaceship, (Explorer, Courier)
+                    ):
                         action_index_probs.append((14, 0.1))
 
                     # trade
@@ -1734,8 +1739,8 @@ class Player:
                     if item_type not in base_price_cache:
                         material = material_manager.get_material(item_type)
                         if material:
-                            base_price_cache[item_type] = material_manager.guess_base_price(
-                                material.rarity
+                            base_price_cache[item_type] = (
+                                material_manager.guess_base_price(material.rarity)
                             )
                         else:
                             spaceship_info = spaceship_manager.get_spaceship(item_type)
@@ -1772,13 +1777,16 @@ class Player:
                         * self.universe.galactic_price_index
                     )
         return spaceship_worth
-    
+
     def calculate_marketplace_reserve(self):
         reserve = 0
         for system in self.universe.star_systems:
             for planet in system.planets:
                 marketplace = planet.marketplace
-                reserve += marketplace.wallet[self.name] + marketplace.inventory_estimate[self.name]
+                reserve += (
+                    marketplace.wallet[self.name]
+                    + marketplace.inventory_estimate[self.name]
+                )
         return reserve
 
     def calculate_roi(self):
@@ -1924,7 +1932,7 @@ class Player:
             and self.wallet > 0
             else 0
         )
-    
+
     def can_buy_material_low(self):
         return (
             1
@@ -1940,7 +1948,7 @@ class Player:
             and self.current_location.has_storage()
             and bool(self.current_location.storage.get_inventory(self.name))
         )
-    
+
     def can_sell_material_high(self):
         return int(
             self.current_location.has_marketplace()
