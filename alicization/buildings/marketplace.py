@@ -115,8 +115,7 @@ class Marketplace(Building, Investable):
             self.wallet[player.name] += cost
             self._distribute_earnings(service_fee)
             return True
-        else:
-            return False
+        return False
 
     def place_ask_order(self, player, item_type, quantity, min_price, buyout_price):
         expiry = time_keeper.turn + NUM_TURN_ASK_ORDER_EXPIRY
@@ -139,28 +138,31 @@ class Marketplace(Building, Investable):
             base_price = self._get_base_price(item_type)
             self.inventory_estimate[player.name] += quantity * base_price
             return True
-        else:
-            return False
+        return False
 
     def match_orders(self):
         for item_type, bid_orders in self.bid_orders.items():
             ask_orders = self.ask_orders[item_type]
+            matched_bids = []
             for bid_order in bid_orders:
+                matched_asks = []
                 for ask_order in ask_orders:
                     if bid_order.price >= ask_order.buyout_price:
                         trade_quantity = min(bid_order.quantity, ask_order.quantity)
                         trade_price = min(bid_order.price, ask_order.buyout_price)
-
                         self.execute_order(
                             bid_order, ask_order, trade_quantity, trade_price
                         )
-
                         if ask_order.quantity == 0:
-                            ask_orders.remove(ask_order)
+                            matched_asks.append(ask_order)
                         if bid_order.quantity == 0:
                             break
+                for ask_order in matched_asks:
+                    ask_orders.remove(ask_order)
                 if bid_order.quantity == 0:
-                    bid_orders.remove(bid_order)
+                    matched_bids.append(bid_order)
+            for bid_order in matched_bids:
+                bid_orders.remove(bid_order)
 
     def execute_order(self, bid_order, ask_order, quantity: int, price: float):
         bid_order.quantity -= quantity
