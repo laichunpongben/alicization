@@ -14,6 +14,7 @@ material_manager = MaterialManager()
 spaceship_manager = SpaceshipManager()
 
 PERIOD = 5000
+MIN_UNIT_PRICE = 0.01
 
 
 class Economy:
@@ -25,11 +26,9 @@ class Economy:
         return cls.__instance
 
     def __init__(self):
-        self._transactions = {}
+        self._transactions = defaultdict(lambda: deque(maxlen=100))
         self._total_transaction = 0
         self._total_trade_revenue = 0
-        self._total_trade_quantity = defaultdict(int)
-        self._weighted_averages = defaultdict(float)
 
     @property
     def transactions(self):
@@ -45,49 +44,44 @@ class Economy:
 
     def push_transaction(self, transaction):
         item_type = transaction.item_type
-        if item_type not in self._transactions:
-            self._transactions[item_type] = deque(maxlen=100)
         self._transactions[item_type].append(transaction)
         self._total_transaction += 1
         self._total_trade_revenue += transaction.quantity * transaction.price
 
     def calculate_galactic_price_index(self):
-        for item_type, transactions in self._transactions.items():
-            material = material_manager.get_material(item_type)
-            spaceship = spaceship_manager.get_spaceship(item_type)
-            if material:
-                base_price = material_manager.guess_base_price(material.rarity)
-            elif spaceship:
-                base_price = spaceship.base_price
-            else:
-                base_price = 1
+        total_weighted_average = 0
+        total_item_types = 0
 
+        for item_type, transactions in self._transactions.items():
+            base_price = self._get_base_price(item_type)
             recent_transactions = [
                 t for t in transactions if t.turn + PERIOD >= time_keeper.turn
             ]
-            total_quantity = sum(t.quantity for t in recent_transactions)
-            weighted_average = 0
-            deviation_total = 0
-
-            for t in recent_transactions:
-                deviation = t.price / base_price
-                deviation_total += deviation * t.quantity
-
+            total_quantity, weighted_average = self._calculate_weighted_average(
+                recent_transactions, base_price
+            )
             if total_quantity > 0:
-                weighted_average = deviation_total / total_quantity
-
-            self._total_trade_quantity[item_type] = total_quantity
-            self._weighted_averages[item_type] = weighted_average
-
-        total_weighted_average = 0
-        total_item_types = 0
-        for item_type, total_quantity in self._total_trade_quantity.items():
-            if total_quantity > 0:
-                total_weighted_average += self._weighted_averages[item_type]
+                total_weighted_average += weighted_average
                 total_item_types += 1
 
-        if total_item_types > 0:
-            galactic_price_index = total_weighted_average / total_item_types
-            return galactic_price_index
+        return total_weighted_average / total_item_types if total_item_types > 0 else 1
+
+    def _get_base_price(self, item_type):
+        material = material_manager.get_material(item_type)
+        if material:
+            base_price = material_manager.guess_base_price(material.rarity)
         else:
-            return 1
+            spaceship_info = spaceship_manager.get_spaceship(item_type)
+            if spaceship_info:
+                base_price = spaceship_info.base_price
+            else:
+                logger.error(f"Missing price info: {item_type}")
+                base_price = MIN_UNIT_PRICE
+        return base_price
+
+    def _calculate_weighted_average(self, transactions, base_price):
+        total_quantity = sum(t.quantity for t in transactions)
+        deviation_total = sum((t.price / base_price) * t.quantity for t in transactions)
+
+        weighted_average = deviation_total / total_quantity if total_quantity > 0 else 0
+        return total_quantity, weighted_average
