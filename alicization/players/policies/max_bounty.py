@@ -38,6 +38,8 @@ from ..actions.trade import (
     can_sell_material,
     can_buy_spaceship,
 )
+from ..policies.action_map import ACTION_INDEX_MAP
+from ..enums.action import Action
 from ...spaceships.explorer import Explorer
 from ...spaceships.miner import Miner
 from ...spaceships.extractor import Extractor
@@ -61,77 +63,87 @@ def max_bounty_policy(player):
     current_location = player_manager.get_location(player.name)
     spaceship = player_manager.get_spaceship(player.name)
     if can_repair(player, current_location, spaceship):
-        action_index_probs.append((15, 0.1))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.REPAIR.value], 0.1))
     if can_upgrade(player, current_location, spaceship):
-        action_index_probs.append((16, 0.03))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.UPGRADE.value], 0.03))
     if can_move_planet(current_system):
-        action_index_probs.append((1, 0.1))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.MOVE_PLANET.value], 0.1))
     if can_move_asteroid_belt(current_system):
-        action_index_probs.append((2, 0.01))
+        action_index_probs.append(
+            (ACTION_INDEX_MAP[Action.MOVE_ASTEROID_BELT.value], 0.01)
+        )
     if can_move_moon(current_system):
-        action_index_probs.append((3, 0.01))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.MOVE_MOON.value], 0.01))
     if can_move_stargate(current_system):
-        action_index_probs.append((4, 0.01))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.MOVE_STARGATE.value], 0.01))
     if can_move_debris(current_system):
-        action_index_probs.append((5, 0.01))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.MOVE_DEBRIS.value], 0.01))
     if can_travel(current_location):
-        action_index_probs.append((6, 0.01))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.TRAVEL.value], 0.01))
     if can_mine(current_location, spaceship):
-        action_index_probs.append((8, 0.2))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.MINE.value], 0.2))
     if can_salvage(current_location, spaceship):
-        action_index_probs.append((17, 0.10))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.SALVAGE.value], 0.10))
     if can_unload(current_location, spaceship):
-        action_index_probs.append((9, 0.01))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.UNLOAD.value], 0.01))
     if can_load(player, current_location, spaceship):
-        action_index_probs.append((39, 0.001))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.LOAD.value], 0.001))
     if can_sell_material(player, current_location):
-        action_index_probs.append((11, 0.4))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.SELL.value], 0.4))
     if can_invest(player, current_location, "factory"):
-        action_index_probs.append((12, 0.001))
+        action_index_probs.append(
+            (ACTION_INDEX_MAP[Action.INVEST_FACTORY.value], 0.001)
+        )
     if can_invest(player, current_location, "drydock"):
-        action_index_probs.append((32, 0.001))
+        action_index_probs.append(
+            (ACTION_INDEX_MAP[Action.INVEST_DRYDOCK.value], 0.001)
+        )
     if can_invest(player, current_location, "marketplace"):
-        action_index_probs.append((40, 0.001))
+        action_index_probs.append(
+            (ACTION_INDEX_MAP[Action.INVEST_MARKETPLACE.value], 0.001)
+        )
     if can_collect(player, current_location):
-        action_index_probs.append((13, 0.001))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.COLLECT.value], 0.001))
 
     if (
         can_buy_spaceship(player, current_location)
         and player.wallet >= 3500000
         and not isinstance(spaceship, Destroyer)
     ):
-        action_index_probs.append((49, 0.2))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.BUY_DESTROYER.value], 0.2))
     if (
         can_buy_spaceship(player, current_location)
         and player.wallet >= 70000
         and not isinstance(spaceship, Frigate)
     ):
-        action_index_probs.append((48, 0.4))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.BUY_FRIGATE.value], 0.4))
     if (
         can_buy_spaceship(player, current_location)
         and player.wallet >= 1400
         and not isinstance(spaceship, Corvette)
     ):
-        action_index_probs.append((23, 0.2))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.BUY_CORVETTE.value], 0.2))
     if (
         can_buy_spaceship(player, current_location)
         and player.wallet >= 1400
         and not isinstance(spaceship, Courier)
     ):
-        action_index_probs.append((45, 0.1))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.BUY_COURIER.value], 0.1))
 
     if (
         can_buy_spaceship(player, current_location)
         and player.wallet >= 35000
         and not isinstance(spaceship, Extractor)
     ):
-        action_index_probs.append((50, 0.0001))
+        action_index_probs.append(
+            (ACTION_INDEX_MAP[Action.BUY_EXTRACTOR.value], 0.0001)
+        )
     if (
         can_buy_spaceship(player, current_location)
         and player.wallet >= 700
         and not isinstance(spaceship, Miner)
     ):
-        action_index_probs.append((37, 0.0001))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.BUY_MINER.value], 0.0001))
 
     if can_pilot(player, current_location, "miner") and (
         player.wallet < 10000
@@ -140,7 +152,7 @@ def max_bounty_policy(player):
             and not isinstance(spaceship, Corvette)
         )
     ):
-        action_index_probs.append((28, 0.01))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.PILOT_MINER.value], 0.01))
 
     if can_pilot(player, current_location, "extractor") and (
         player.wallet < 10000
@@ -149,7 +161,9 @@ def max_bounty_policy(player):
             and not isinstance(spaceship, Corvette)
         )
     ):
-        action_index_probs.append((36, 0.02))
+        action_index_probs.append(
+            (ACTION_INDEX_MAP[Action.PILOT_EXTRACTOR.value], 0.02)
+        )
 
     if can_pilot(player, current_location, "corvette"):
         if (isinstance(spaceship, (Explorer, Miner, Courier))) or (
@@ -157,14 +171,16 @@ def max_bounty_policy(player):
             and spaceship.is_damaged()
             and player.wallet <= spaceship.calc_repair_cost()
         ):
-            action_index_probs.append((29, 1))
+            action_index_probs.append(
+                (ACTION_INDEX_MAP[Action.PILOT_CORVETTE.value], 1)
+            )
 
     if can_pilot(player, current_location, "frigate"):
-        action_index_probs.append((30, 1))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.PILOT_FRIGATE.value], 1))
     if can_pilot(player, current_location, "destroyer"):
-        action_index_probs.append((34, 1))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.PILOT_DESTROYER.value], 1))
     if can_pilot(player, current_location, "courier"):
-        action_index_probs.append((47, 0.001))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.PILOT_COURIER.value], 0.001))
 
     ready_to_mission = (
         can_mission(current_location)
@@ -176,7 +192,7 @@ def max_bounty_policy(player):
         and math.isclose(spaceship.hull, spaceship.max_hull)
     )
     if ready_to_mission:
-        action_index_probs.append((14, 0.1))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.EASY_MISSION.value], 0.1))
 
     wanteds = [x[0] for x in leaderboard.get_top_leaders("bounty", 10) if x[1] > 0]
     kill_threshold = universe.total_kill * 0.05
@@ -203,6 +219,6 @@ def max_bounty_policy(player):
         and killer_match
     )
     if should_police:
-        action_index_probs.append((19, 1))
+        action_index_probs.append((ACTION_INDEX_MAP[Action.ATTACK_STRONGEST.value], 1))
 
     return action_index_probs

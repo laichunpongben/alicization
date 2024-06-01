@@ -1,4 +1,4 @@
-# control.py
+# players/enums/control.py
 
 from enum import Enum
 

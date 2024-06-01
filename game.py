@@ -5,10 +5,10 @@ import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from alicization.enums.control import Control
-from alicization.enums.goal import Goal
 from alicization.universe import Universe
 from alicization.players.player import Player
+from alicization.players.enums.control import Control
+from alicization.players.enums.goal import Goal
 from alicization.players.policies.ai_action import (
     add_learning_agent,
 )

@@ -7,6 +7,7 @@ import logging
 
 import numpy as np
 
+from .action_map import ACTIONS
 from .max_mission import max_mission_policy
 from .max_kill import max_kill_policy
 from .max_bounty import max_bounty_policy
@@ -95,9 +96,9 @@ from ..util import (
     get_mission_info,
     calculate_distance_from_home,
 )
+from ..enums.action import Action
+from ..enums.goal import Goal
 from ...agents.dqn_agent import DQNAgent
-from ...enums.action import Action
-from ...enums.goal import Goal
 from ...managers.time_keeper import TimeKeeper
 from ...managers.player_manager import PlayerManager
 
@@ -106,64 +107,6 @@ logger = logging.getLogger(__name__)
 
 time_keeper = TimeKeeper()
 player_manager = PlayerManager()
-
-
-ACTION_ENUMS = [
-    Action.IDLE,
-    Action.MOVE_PLANET,
-    Action.MOVE_ASTEROID_BELT,
-    Action.MOVE_MOON,
-    Action.MOVE_STARGATE,
-    Action.MOVE_DEBRIS,
-    Action.TRAVEL,
-    Action.EXPLORE,
-    Action.MINE,
-    Action.UNLOAD,
-    Action.BUY,
-    Action.SELL,
-    Action.INVEST_FACTORY,
-    Action.COLLECT,
-    Action.EASY_MISSION,
-    Action.REPAIR,
-    Action.UPGRADE,
-    Action.SALVAGE,
-    Action.ATTACK_RANDOM,
-    Action.ATTACK_STRONGEST,
-    Action.ATTACK_WEAKEST,
-    Action.BOMBARD,
-    Action.SET_HOME,
-    Action.BUY_CORVETTE,
-    Action.SELL_CORVETTE,
-    Action.BUILD_MINER,
-    Action.BUILD_CORVETTE,
-    Action.BUILD_FRIGATE,
-    Action.PILOT_MINER,
-    Action.PILOT_CORVETTE,
-    Action.PILOT_FRIGATE,
-    Action.PLACE_BOUNTY,
-    Action.INVEST_DRYDOCK,
-    Action.BUILD_DESTROYER,
-    Action.PILOT_DESTROYER,
-    Action.BUILD_EXTRACTOR,
-    Action.PILOT_EXTRACTOR,
-    Action.BUY_MINER,
-    Action.SELL_MINER,
-    Action.LOAD,
-    Action.INVEST_MARKETPLACE,
-    Action.SELL_FRIGATE,
-    Action.SELL_DESTROYER,
-    Action.SELL_EXTRACTOR,
-    Action.BUILD_COURIER,
-    Action.BUY_COURIER,
-    Action.SELL_COURIER,
-    Action.PILOT_COURIER,
-    Action.BUY_FRIGATE,
-    Action.BUY_DESTROYER,
-    Action.BUY_EXTRACTOR,
-    Action.BUY_MATERIAL_LOW,
-    Action.SELL_MATERIAL_HIGH,
-]
-ACTIONS = [action.value for action in ACTION_ENUMS]
 
 
 def choose_action_index_symbolic_ai(player):

@@ -1,4 +1,4 @@
-# goal.py
+# players/enums/goal.py
 
 from enum import Enum
 

@@ -3,7 +3,7 @@
 from collections import defaultdict, deque
 import logging
 
-from ..enums.control import Control
+from .enums.control import Control
 from ..managers.time_keeper import TimeKeeper
 from ..managers.player_manager import PlayerManager
 from .policies.ai_action import (

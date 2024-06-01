@@ -1,4 +1,4 @@
-# action.py
+# players/enums/action.py
 
 from enum import Enum
 
