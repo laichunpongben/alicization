@@ -7,7 +7,7 @@ import logging
 
 import numpy as np
 
-from .action_map import ACTIONS
+from .action_map import ACTIONS, ACTION_INDEX_MAP
 from .max_mission import max_mission_policy
 from .max_kill import max_kill_policy
 from .max_bounty import max_bounty_policy
@@ -110,7 +110,6 @@ player_manager = PlayerManager()
 
 
 def choose_action_index_symbolic_ai(player):
-    # Choose action using rules
     goal_policy_map = {
         Goal.MAX_MISSION: max_mission_policy,
         Goal.MAX_KILL: max_kill_policy,
@@ -125,15 +124,13 @@ def choose_action_index_symbolic_ai(player):
         return random.choices(action_indexes, weights=probs, k=1)[0]
     else:
         return {
-            0: 1,
-            1: 12,
-            2: 13,
-            3: 9,
-            4: 11,
-            5: 2,  # Map turns to action indexes
-        }.get(
-            time_keeper.turn % 10, 8
-        )  # Default to mining
+            0: ACTION_INDEX_MAP[Action.MOVE_PLANET.value],
+            1: ACTION_INDEX_MAP[Action.INVEST_FACTORY.value],
+            2: ACTION_INDEX_MAP[Action.COLLECT.value],
+            3: ACTION_INDEX_MAP[Action.UNLOAD.value],
+            4: ACTION_INDEX_MAP[Action.SELL.value],
+            5: ACTION_INDEX_MAP[Action.MOVE_ASTEROID_BELT.value],
+        }.get(time_keeper.turn % 10, ACTION_INDEX_MAP[Action.MINE.value])
 
 
 def choose_action_index_neural_ai(player):
@@ -482,7 +479,6 @@ def get_full_state(player):
 
 def get_reduced_state(player):
     state_dict = get_full_state(player)
-    # reduce state space
     state_dict.pop("weapon")
     state_dict.pop("shield")
     state_dict.pop("armor")
