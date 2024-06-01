@@ -29,49 +29,46 @@ class Drydock(Building, Investable):
         Investable.__init__(self)
         self.name = f"Drydock {uuid.uuid4().hex}"
 
-    def can_repair(self, player):
+    def can_repair(self, player, spaceship):
+        return spaceship.is_damaged() and player.wallet >= spaceship.calc_upgrade_cost()
+
+    def can_upgrade(self, player, spaceship):
         return (
-            player.spaceship.is_damaged()
-            and player.wallet >= player.spaceship.calc_upgrade_cost()
+            spaceship.level < spaceship.max_level
+            and player.wallet >= spaceship.calc_upgrade_cost()
         )
 
-    def can_upgrade(self, player):
-        return (
-            player.spaceship.level < player.spaceship.max_level
-            and player.wallet >= player.spaceship.calc_upgrade_cost()
-        )
-
-    def repair_spaceship(self, player):
+    def repair_spaceship(self, player, spaceship):
         if self._cooldown > 0:
             return False
 
-        if self.can_repair(player):
-            repair_cost = player.spaceship.calc_repair_cost()
+        if self.can_repair(player, spaceship):
+            repair_cost = spaceship.calc_repair_cost()
             player.spend(repair_cost)
-            player.spaceship.repair()
+            spaceship.repair()
             earning = repair_cost * min(BASE_EARNING_RATIO * (1 + self.level * 0.01), 1)
             self._distribute_earnings(earning)
             logger.info(
-                f"{player.spaceship.ship_class} repaired at {self.name} for {repair_cost}."
+                f"{spaceship.ship_class} repaired at {self.name} for {repair_cost}."
             )
             return True
 
         return False
 
-    def upgrade_spaceship(self, player):
+    def upgrade_spaceship(self, player, spaceship):
         if self._cooldown > 0:
             return False
 
-        if self.can_upgrade(player):
-            upgrade_cost = player.spaceship.calc_upgrade_cost()
+        if self.can_upgrade(player, spaceship):
+            upgrade_cost = spaceship.calc_upgrade_cost()
             player.spend(upgrade_cost)
-            player.spaceship.upgrade()
+            spaceship.upgrade()
             earning = upgrade_cost * min(
                 BASE_EARNING_RATIO * (1 + self.level * 0.01), 1
             )
             self._distribute_earnings(earning)
             logger.info(
-                f"{player.spaceship.ship_class} upgraded at {self.name} for {upgrade_cost}."
+                f"{spaceship.ship_class} upgraded at {self.name} for {upgrade_cost}."
             )
             return True
 

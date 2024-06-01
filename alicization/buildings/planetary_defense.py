@@ -6,10 +6,12 @@ import logging
 import numpy as np
 
 from .building import Building
+from ..managers.player_manager import PlayerManager
 from ..managers.leaderboard import Leaderboard
 
 logger = logging.getLogger(__name__)
 
+player_manager = PlayerManager()
 leaderboard = Leaderboard()
 
 NUM_BOMBARD_ROUND = 10
@@ -39,24 +41,24 @@ class PlanetaryDefense(Building):
             damage = 0
         return damage
 
-    def bombard(self, player):
-        damage = (
-            np.random.binomial(NUM_BOMBARD_ROUND, P_BOMBARD_HIT)
-            * player.spaceship.weapon
-        )
+    def bombard(self, player, spaceship):
+        damage = np.random.binomial(NUM_BOMBARD_ROUND, P_BOMBARD_HIT) * spaceship.weapon
         player.total_damage += damage
-        player.universe.total_damage_dealt += damage
+
+        universe = player_manager.get_universe(player.name)
+        universe.total_damage_dealt += damage
         logger.info(f"{self.name} was bombarded and took {damage} damage!")
         if self._hull <= 0:
             player.destroy += 1
-            player.universe.total_destroy += 1
+            universe.total_destroy += 1
             leaderboard.log_achievement(player.name, "destroy", DESTROY_SCORE)
             self.reset()
         else:
             defensive_damage = self.attack()
-            player.spaceship.take_damage(defensive_damage)
-            if player.spaceship.destroyed:
-                player.current_system.make_debris(player.spaceship.cargo_hold)
+            spaceship.take_damage(defensive_damage)
+            if spaceship.destroyed:
+                current_system = player_manager.get_system(player.name)
+                current_system.make_debris(spaceship.cargo_hold)
                 player.die()
                 leaderboard.log_achievement(player.name, "death", 1)
 

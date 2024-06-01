@@ -1,4 +1,4 @@
-# spaceship.py
+# spaceships/spaceship.py
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -32,6 +32,7 @@ class Spaceship(ABC):
         self._engine = 10
         self._evasion = 0
         self._max_cargo_size = 0
+        self._cargo_size = 0
         self._base_repair_cost = 0
         self._base_upgrade_cost = 0
         self._max_level = 0
@@ -141,6 +142,10 @@ class Spaceship(ABC):
         self._cargo_hold = value
 
     @property
+    def cargo_size(self):
+        return self._cargo_size
+
+    @property
     def base_repair_cost(self):
         return self._base_repair_cost
 
@@ -222,6 +227,9 @@ class Spaceship(ABC):
 
         return cargo_size
 
+    def update_cargo_size(self):
+        self._cargo_size = self.calculate_cargo_size()
+
     def is_cargo_full(self):
         cargo_size = self.calculate_cargo_size()
         return cargo_size >= self._max_cargo_size
@@ -243,6 +251,13 @@ class Spaceship(ABC):
             logger.debug("Spaceship upgrade done!")
         else:
             logger.debug("Spaceship max upgrade reached!")
+
+    def empty_cargo_hold(self):
+        self._cargo_hold = defaultdict(int)
+
+    def health_check(self):
+        self.recharge_shield()
+        self.update_cargo_size()
 
     def to_json(self):
         return {
@@ -268,5 +283,6 @@ class Spaceship(ABC):
             "maxLevel": self.max_level,
             "mining": self.mining,
             "cargoHold": dict(self.cargo_hold),
+            "cargoSize": self.cargo_size,
             "destroyed": self.destroyed,
         }

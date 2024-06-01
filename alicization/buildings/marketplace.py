@@ -95,6 +95,8 @@ class Marketplace(Building, Investable):
         self.bid_orders = defaultdict(list)
 
     def place_bid_order(self, player, item_type, quantity, price):
+        current_system = player_manager.get_system(player.name)
+        current_location = player_manager.get_location(player.name)
         expiry = time_keeper.turn + NUM_TURN_BID_ORDER_EXPIRY
         cost = quantity * price
         service_fee = (
@@ -108,8 +110,8 @@ class Marketplace(Building, Investable):
                 quantity,
                 price,
                 expiry,
-                player.current_system.name,
-                player.current_location.name,
+                current_system.name,
+                current_location.name,
             )
             insort(self.bid_orders[item_type], bid_order)
             self.wallet[player.name] += cost
@@ -118,11 +120,11 @@ class Marketplace(Building, Investable):
         return False
 
     def place_ask_order(self, player, item_type, quantity, min_price, buyout_price):
+        current_system = player_manager.get_system(player.name)
+        current_location = player_manager.get_location(player.name)
         expiry = time_keeper.turn + NUM_TURN_ASK_ORDER_EXPIRY
-        if player.current_location.storage.get_item(player.name, item_type) >= quantity:
-            player.current_location.storage.remove_item(
-                player.name, item_type, quantity
-            )
+        if current_location.storage.get_item(player.name, item_type) >= quantity:
+            current_location.storage.remove_item(player.name, item_type, quantity)
             ask_order = AskOrder(
                 player.name,
                 item_type,
@@ -130,8 +132,8 @@ class Marketplace(Building, Investable):
                 min_price,
                 buyout_price,
                 expiry,
-                player.current_system.name,
-                player.current_location.name,
+                current_system.name,
+                current_location.name,
             )
             insort(self.ask_orders[item_type], ask_order)
             self.inventory[item_type] += quantity

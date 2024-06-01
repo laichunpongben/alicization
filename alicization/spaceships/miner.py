@@ -1,4 +1,4 @@
-# miner.py
+# spaceships/miner.py
 
 from .spaceship import Spaceship
 
@@ -23,6 +23,7 @@ class Miner(Spaceship):
         self._engine = 10
         self._evasion = 0
         self._max_cargo_size = 100000
+        self._cargo_size = 0
         self._base_repair_cost = 100
         self._base_upgrade_cost = 200
         self._max_level = 10

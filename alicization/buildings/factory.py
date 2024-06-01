@@ -7,12 +7,14 @@ import logging
 
 from .building import Building
 from .investable import Investable
+from ..managers.player_manager import PlayerManager
 from ..managers.blueprint_manager import BlueprintManager
 from ..managers.spaceship_manager import SpaceshipManager
 from ..managers.leaderboard import Leaderboard
 
 logger = logging.getLogger(__name__)
 
+player_manager = PlayerManager()
 blueprint_manager = BlueprintManager()
 spaceship_manager = SpaceshipManager()
 leaderboard = Leaderboard()
@@ -34,6 +36,7 @@ class Factory(Building, Investable):
         if self._cooldown > 0:
             return False
 
+        current_location = player_manager.get_location(player.name)
         spaceship_info = spaceship_manager.get_spaceship(blueprint_name)
         if spaceship_info:
             base_price = spaceship_info.base_price
@@ -45,22 +48,23 @@ class Factory(Building, Investable):
 
         missing_materials = []
         for material, qty in blueprint.components.items():
-            if player.current_location.storage.get_item(player.name, material) < qty:
+            if current_location.storage.get_item(player.name, material) < qty:
                 missing_materials.append((material, qty))
 
         if player.wallet >= job_cost and not missing_materials:
             for material, qty in blueprint.components.items():
-                player.current_location.storage.remove_item(player.name, material, qty)
+                current_location.storage.remove_item(player.name, material, qty)
 
             player.spend(job_cost)
             earning = job_cost * min(BASE_EARNING_RATIO * (1 + self.level * 0.01), 1)
             self._distribute_earnings(earning)
 
             if self.job_success():
-                player.current_location.storage.add_item(player.name, blueprint_name, 1)
+                current_location.storage.add_item(player.name, blueprint_name, 1)
                 player.build += 1
                 player.turn_production += int(base_price * PRODUCTION_ESTIMATE)
-                player.universe.total_build += 1
+                universe = player_manager.get_universe(player.name)
+                universe.total_build += 1
 
                 scores = {
                     "miner": 1,

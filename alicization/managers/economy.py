@@ -29,6 +29,7 @@ class Economy:
         self._transactions = defaultdict(lambda: deque(maxlen=100))
         self._total_transaction = 0
         self._total_trade_revenue = 0
+        self._galactic_price_index = 1
 
     @property
     def transactions(self):
@@ -42,13 +43,20 @@ class Economy:
     def total_trade_revenue(self):
         return self._total_trade_revenue
 
+    @property
+    def galactic_price_index(self):
+        return self._galactic_price_index
+
     def push_transaction(self, transaction):
         item_type = transaction.item_type
         self._transactions[item_type].append(transaction)
         self._total_transaction += 1
         self._total_trade_revenue += transaction.quantity * transaction.price
 
-    def calculate_galactic_price_index(self):
+    def update_stats(self):
+        self._galactic_price_index = self._calculate_galactic_price_index()
+
+    def _calculate_galactic_price_index(self):
         total_weighted_average = 0
         total_item_types = 0
 

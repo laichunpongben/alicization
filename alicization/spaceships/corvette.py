@@ -1,4 +1,4 @@
-# corvette.py
+# spaceships/corvette.py
 
 from .spaceship import Spaceship
 
@@ -23,6 +23,7 @@ class Corvette(Spaceship):
         self._engine = 10
         self._evasion = 0.1
         self._max_cargo_size = 20000
+        self._cargo_size = 0
         self._base_repair_cost = 200
         self._base_upgrade_cost = 400
         self._max_level = 20

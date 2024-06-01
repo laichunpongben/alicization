@@ -1,4 +1,4 @@
-# explorer.py
+# spaceships/explorer.py
 
 from .spaceship import Spaceship
 
@@ -23,6 +23,7 @@ class Explorer(Spaceship):
         self._engine = 10
         self._evasion = 0
         self._max_cargo_size = 10000
+        self._cargo_size = 0
         self._base_repair_cost = 10
         self._base_upgrade_cost = 0
         self._max_level = 0

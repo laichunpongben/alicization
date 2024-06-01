@@ -8,11 +8,13 @@ import numpy as np
 
 from .location import Location
 from .mineable import Mineable
+from ..managers.player_manager import PlayerManager
 from ..managers.material_manager import MaterialManager
 from ..managers.leaderboard import Leaderboard
 
 logger = logging.getLogger(__name__)
 
+player_manager = PlayerManager()
 material_manager = MaterialManager()
 leaderboard = Leaderboard()
 
@@ -59,10 +61,10 @@ class AsteroidBelt(Location, Mineable):
 
         return resources
 
-    def mine(self, player):
-        self.check_crash(player)
+    def mine(self, player, spaceship):
+        self.check_crash(player, spaceship)
 
-        if player.spaceship.is_cargo_full():
+        if spaceship.is_cargo_full():
             return 0
 
         available_resources = [
@@ -78,8 +80,8 @@ class AsteroidBelt(Location, Mineable):
 
         base_mined_amount = max(
             BASE_MINE_AMOUNT
-            * player.spaceship.mining
-            * (1 + player.spaceship.level / 10)
+            * spaceship.mining
+            * (1 + spaceship.level / 10)
             * (1 + player.skills["mining"] * 0.001),
             0,
         )
@@ -88,12 +90,14 @@ class AsteroidBelt(Location, Mineable):
         mined_amount = min(mined_amount, self.resources[resource_to_mine])
 
         self.resources[resource_to_mine] -= mined_amount
-        player.spaceship.cargo_hold[resource_to_mine] += mined_amount
+        spaceship.cargo_hold[resource_to_mine] += mined_amount
 
         player.mining_completed += 1
         player.mined += mined_amount
         player.turn_production += mined_amount
-        player.universe.total_mined += mined_amount
+
+        universe = player_manager.get_universe(player.name)
+        universe.total_mined += mined_amount
         player.skills["mining"] = (
             int(math.log(player.mining_completed) / math.log(math.sqrt(2)))
             if player.mining_completed > 0
@@ -102,14 +106,14 @@ class AsteroidBelt(Location, Mineable):
 
         return 1
 
-    def check_crash(self, player):
+    def check_crash(self, player, spaceship):
         skill_level = player.skills["mining"]
         p_crash = P_CRASH_BASE * max(1 - skill_level * 0.001, 0.01)
         if random.random() < p_crash:
             damage = np.random.poisson(CRASH_MEAN_DAMAGE)
             logger.debug(f"{self.name} crashed! Causing {damage} damage!")
-            player.spaceship.take_damage(damage)
-            if player.spaceship.destroyed:
+            spaceship.take_damage(damage)
+            if spaceship.destroyed:
                 leaderboard.log_achievement(player.name, "death", 1)
                 player.die()
 

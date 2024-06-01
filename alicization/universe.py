@@ -9,6 +9,7 @@ import numpy as np
 from .star_system import StarSystem
 from .locations.stargate import Stargate
 from .managers.time_keeper import TimeKeeper
+from .managers.player_manager import PlayerManager
 from .managers.material_manager import MaterialManager
 from .managers.spaceship_manager import SpaceshipManager
 from .managers.economy import Economy
@@ -16,6 +17,7 @@ from .managers.economy import Economy
 logger = logging.getLogger(__name__)
 
 time_keeper = TimeKeeper()
+player_manager = PlayerManager()
 material_manager = MaterialManager()
 spaceship_manager = SpaceshipManager()
 economy = Economy()
@@ -54,9 +56,11 @@ class Universe:
 
     def add_player(self, player):
         self._players.append(player)
+        player_manager.update_universe(player.name, self)
 
     def remove_player(self, player):
         self._players.remove(player)
+        player_manager.update_universe(player.name, None)
 
     def add_star_system(self):
         new_system = StarSystem(f"System {len(self.star_systems)}")
@@ -107,31 +111,6 @@ class Universe:
         stargate_from = Stargate(neighbor, system, distance)
         neighbor.add_stargate(stargate_from)
 
-    def calculate_minimum_distance(self, start_system, end_system):
-        if start_system == end_system:
-            return 0
-
-        distances = {system: float("inf") for system in self.star_systems}
-        distances[start_system] = 0
-        priority_queue = [(0, start_system)]
-
-        while priority_queue:
-            current_distance, current_system = heapq.heappop(priority_queue)
-
-            if current_distance > distances[current_system]:
-                continue
-
-            for stargate in current_system.stargates:
-                neighbor = stargate.destination
-                distance = stargate.distance
-                new_distance = current_distance + distance
-
-                if new_distance < distances[neighbor]:
-                    distances[neighbor] = new_distance
-                    heapq.heappush(priority_queue, (new_distance, neighbor))
-
-        return distances[end_system]
-
     def health_check(self):
         expand_threshold_small = 2 ** (len(self.star_systems) / 2)
         expand_threshold_large = 2 ** len(self.star_systems)
@@ -173,7 +152,10 @@ class Universe:
 
         self.total_transaction = economy.total_transaction
         self.total_trade_revenue = economy.total_trade_revenue
-        self.galactic_price_index = economy.calculate_galactic_price_index()
+
+        economy.update_stats()
+        self.galactic_price_index = economy.galactic_price_index
+
         self.galactic_affordability = self.calculate_galactic_affordability()
         self.galactic_productivity = self.calculate_galactic_productivity()
 

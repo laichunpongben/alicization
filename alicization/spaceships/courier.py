@@ -1,4 +1,4 @@
-# courier.py
+# spaceships/courier.py
 
 from .spaceship import Spaceship
 
@@ -23,6 +23,7 @@ class Courier(Spaceship):
         self._engine = 20
         self._evasion = 0.8
         self._max_cargo_size = 10000
+        self._cargo_size = 0
         self._base_repair_cost = 200
         self._base_upgrade_cost = 400
         self._max_level = 20

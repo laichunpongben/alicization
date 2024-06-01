@@ -7,8 +7,11 @@ from fastapi import WebSocket, WebSocketDisconnect
 
 from alicization.enums.control import Control
 from alicization.enums.goal import Goal
-from alicization.player import Player
 from alicization.universe import Universe
+from alicization.players.player import Player
+from alicization.players.policies.ai_action import (
+    add_learning_agent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,289 +23,77 @@ SLEEP_SEC = 0.1
 
 class Game:
     def __init__(self):
-        self.turn = 1
-        self.universe = Universe(initial_systems=5)
-        self.players = {
-            "randomwalk1": Player(
-                "Random Walker", self.universe, control=Control.RANDOM_WALK_AI
+        self._turn = 1
+        self._universe = Universe(initial_systems=5)
+        self._players = [
+            Player("Random Walker", control=Control.RANDOM_WALK_AI),
+            Player("Slave", control=Control.SYMBOLIC_AI),
+            Player("Clone Army 1", control=Control.SYMBOLIC_AI, goal=Goal.MAX_KILL),
+            Player("Clone Army 2", control=Control.SYMBOLIC_AI, goal=Goal.MAX_KILL),
+            Player("Clone Army 3", control=Control.SYMBOLIC_AI, goal=Goal.MAX_KILL),
+            Player("Clone Army 4", control=Control.SYMBOLIC_AI, goal=Goal.MAX_KILL),
+            Player("Clone Army 5", control=Control.SYMBOLIC_AI, goal=Goal.MAX_KILL),
+            Player("Clone Army 6", control=Control.SYMBOLIC_AI, goal=Goal.MAX_KILL),
+            Player("Clone Army 7", control=Control.SYMBOLIC_AI, goal=Goal.MAX_KILL),
+            Player("Clone Army 8", control=Control.SYMBOLIC_AI, goal=Goal.MAX_KILL),
+            Player("Clone Army 9", control=Control.SYMBOLIC_AI, goal=Goal.MAX_KILL),
+            Player("Clone Army 10", control=Control.SYMBOLIC_AI, goal=Goal.MAX_KILL),
+            Player(
+                "Bounty Hunter 1", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BOUNTY
             ),
-            "symbolic_default1": Player(
-                "Slave", self.universe, control=Control.SYMBOLIC_AI
+            Player(
+                "Bounty Hunter 2", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BOUNTY
             ),
-            "symbolic_maxkill1": Player(
-                "Clone Army 1",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_KILL,
+            Player(
+                "Bounty Hunter 3", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BOUNTY
             ),
-            "symbolic_maxkill2": Player(
-                "Clone Army 2",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_KILL,
-            ),
-            "symbolic_maxkill3": Player(
-                "Clone Army 3",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_KILL,
-            ),
-            "symbolic_maxkill4": Player(
-                "Clone Army 4",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_KILL,
-            ),
-            "symbolic_maxkill5": Player(
-                "Clone Army 5",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_KILL,
-            ),
-            "symbolic_maxkill6": Player(
-                "Clone Army 6",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_KILL,
-            ),
-            "symbolic_maxkill7": Player(
-                "Clone Army 7",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_KILL,
-            ),
-            "symbolic_maxkill8": Player(
-                "Clone Army 8",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_KILL,
-            ),
-            "symbolic_maxkill9": Player(
-                "Clone Army 9",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_KILL,
-            ),
-            "symbolic_maxkill10": Player(
-                "Clone Army 10",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_KILL,
-            ),
-            "symbolic_maxbounty1": Player(
-                "Bounty Hunter 1",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BOUNTY,
-            ),
-            "symbolic_maxbounty2": Player(
-                "Bounty Hunter 2",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BOUNTY,
-            ),
-            "symbolic_maxbounty3": Player(
-                "Bounty Hunter 3",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BOUNTY,
-            ),
-            "symbolic_maxmission1": Player(
-                "Task Force 1",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_MISSION,
-            ),
-            "symbolic_maxmission2": Player(
-                "Task Force 2",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_MISSION,
-            ),
-            "symbolic_maxmission3": Player(
-                "Task Force 3",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_MISSION,
-            ),
-            "symbolic_maxmission4": Player(
-                "Task Force 4",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_MISSION,
-            ),
-            "symbolic_maxmission5": Player(
-                "Task Force 5",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_MISSION,
-            ),
-            "symbolic_maxmission6": Player(
-                "Task Force 6",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_MISSION,
-            ),
-            "symbolic_maxmission7": Player(
-                "Task Force 7",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_MISSION,
-            ),
-            "symbolic_maxmission8": Player(
-                "Task Force 8",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_MISSION,
-            ),
-            "symbolic_maxmission9": Player(
-                "Task Force 9",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_MISSION,
-            ),
-            "symbolic_maxmission10": Player(
-                "Task Force 10",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_MISSION,
-            ),
-            "symbolic_maxbuild1": Player(
-                "Miner 1",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild2": Player(
-                "Miner 2",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild3": Player(
-                "Miner 3",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild4": Player(
-                "Miner 4",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild5": Player(
-                "Miner 5",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild6": Player(
-                "Miner 6",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild7": Player(
-                "Miner 7",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild8": Player(
-                "Miner 8",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild9": Player(
-                "Miner 9",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild10": Player(
-                "Miner 10",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild11": Player(
-                "Miner 11",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild12": Player(
-                "Miner 12",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild13": Player(
-                "Miner 13",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild14": Player(
-                "Miner 14",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild15": Player(
-                "Miner 15",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild16": Player(
-                "Miner 16",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild17": Player(
-                "Miner 17",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild18": Player(
-                "Miner 18",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild19": Player(
-                "Miner 19",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxbuild20": Player(
-                "Miner 20",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_BUILD,
-            ),
-            "symbolic_maxlocaltrade1": Player(
-                "Trader 1",
-                self.universe,
-                control=Control.SYMBOLIC_AI,
-                goal=Goal.MAX_LOCAL_TRADE,
-            ),
-        }
+            Player("Task Force 1", control=Control.SYMBOLIC_AI, goal=Goal.MAX_MISSION),
+            Player("Task Force 2", control=Control.SYMBOLIC_AI, goal=Goal.MAX_MISSION),
+            Player("Task Force 3", control=Control.SYMBOLIC_AI, goal=Goal.MAX_MISSION),
+            Player("Task Force 4", control=Control.SYMBOLIC_AI, goal=Goal.MAX_MISSION),
+            Player("Task Force 5", control=Control.SYMBOLIC_AI, goal=Goal.MAX_MISSION),
+            Player("Task Force 6", control=Control.SYMBOLIC_AI, goal=Goal.MAX_MISSION),
+            Player("Task Force 7", control=Control.SYMBOLIC_AI, goal=Goal.MAX_MISSION),
+            Player("Task Force 8", control=Control.SYMBOLIC_AI, goal=Goal.MAX_MISSION),
+            Player("Task Force 9", control=Control.SYMBOLIC_AI, goal=Goal.MAX_MISSION),
+            Player("Task Force 10", control=Control.SYMBOLIC_AI, goal=Goal.MAX_MISSION),
+            Player("Miner 1", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 2", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 3", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 4", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 5", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 6", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 7", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 8", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 9", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 10", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 11", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 12", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 13", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 14", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 15", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 16", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 17", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 18", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 19", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Miner 20", control=Control.SYMBOLIC_AI, goal=Goal.MAX_BUILD),
+            Player("Trader 1", control=Control.SYMBOLIC_AI, goal=Goal.MAX_LOCAL_TRADE),
+            Player("Achiever", control=Control.NEURAL_AI, goal=Goal.MAX_SCORE),
+        ]
         self.game_state_queue = asyncio.Queue()
+
+        for player in self._players:
+            player.born(self._universe)
+            if player.control == Control.NEURAL_AI:
+                add_learning_agent(player)
 
     async def update_game_state(self, websocket: WebSocket):
         try:
-            player_data = [player.to_json() for player in self.players.values()]
+            player_data = [player.to_json() for player in self._players]
             await websocket.send_json(
                 {
-                    "turn": self.turn,
-                    "universe": self.universe.to_json(),
+                    "turn": self._turn,
+                    "universe": self._universe.to_json(),
                     "players": player_data,
                 }
             )
@@ -310,9 +101,9 @@ class Game:
             print(f"Connection closed: {websocket}")
 
     async def simulate_turn(self):
-        logger.debug(f"Starting Turn {self.turn}.")
+        logger.debug(f"Starting Turn {self._turn}.")
 
-        for player in self.players.values():
+        for player in self._players:
             if (
                 player.control == Control.RANDOM_WALK_AI
                 or player.control == Control.SYMBOLIC_AI
@@ -320,11 +111,10 @@ class Game:
             ):
                 player.act()
 
-        self.universe.health_check()
+        self._universe.health_check()
+        self._turn += 1
 
-        self.turn += 1
-
-        if self.turn % NUM_TURN_PER_GAME_STATE_UPDATE == 0:
+        if self._turn % NUM_TURN_PER_GAME_STATE_UPDATE == 0:
             await self.game_state_queue.put(self)
 
     async def simulate_game(self):
@@ -333,7 +123,7 @@ class Game:
             while True:
                 await self.simulate_turn()
 
-                if self.turn % NUM_TURN_PER_SLEEP == 0:
+                if self._turn % NUM_TURN_PER_SLEEP == 0:
                     await asyncio.sleep(SLEEP_SEC)
 
         except asyncio.CancelledError:

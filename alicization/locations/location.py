@@ -10,11 +10,13 @@ from ..buildings.storage import Storage
 from ..buildings.marketplace import Marketplace
 from ..buildings.mission_center import MissionCenter
 from ..buildings.factory import Factory
+from ..managers.player_manager import PlayerManager
 from ..managers.location_map import LocationMap
 
 
 logger = logging.getLogger(__name__)
 
+player_manager = PlayerManager()
 location_map = LocationMap()
 
 
@@ -42,12 +44,12 @@ class Location(ABC):
 
     def add_player(self, player):
         self.players.append(player)
-        player.current_location = self
+        player_manager.update_location(player.name, self)
         logger.debug(f"Player {player} added to {self.name}.")
 
     def remove_player(self, player):
         self.players.remove(player)
-        player.current_location = None
+        player_manager.update_location(player.name, None)
         logger.debug(f"Player {player} removed from {self.name}.")
 
     def has_hangar(self):

@@ -1,4 +1,4 @@
-# frigate.py
+# spaceships/frigate.py
 
 from .spaceship import Spaceship
 
@@ -23,6 +23,7 @@ class Frigate(Spaceship):
         self._engine = 10
         self._evasion = 0.05
         self._max_cargo_size = 40000
+        self._cargo_size = 0
         self._base_repair_cost = 5000
         self._base_upgrade_cost = 20000
         self._max_level = 30

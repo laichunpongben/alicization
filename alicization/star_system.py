@@ -8,8 +8,11 @@ from .locations.moon import Moon
 from .locations.asteroid_belt import AsteroidBelt
 from .locations.debris import Debris
 from .locations.empty_space import EmptySpace
+from .managers.player_manager import PlayerManager
 
 logger = logging.getLogger(__name__)
+
+player_manager = PlayerManager()
 
 
 class StarSystem:
@@ -34,13 +37,12 @@ class StarSystem:
 
     def add_player(self, player):
         self._players.append(player)
-        player.current_system = self
         self.explored += 1
-        player.explored_systems.add(self)
+        player_manager.update_system(player.name, self)
 
     def remove_player(self, player):
         self._players.remove(player)
-        player.current_system = None
+        player_manager.update_system(player.name, None)
 
     def add_stargate(self, stargate):
         if stargate not in self.stargates:

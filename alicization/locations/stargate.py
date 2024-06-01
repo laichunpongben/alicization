@@ -4,8 +4,11 @@ import math
 import logging
 
 from .location import Location
+from ..managers.player_manager import PlayerManager
 
 logger = logging.getLogger(__name__)
+
+player_manager = PlayerManager()
 
 
 class Stargate(Location):
@@ -16,7 +19,7 @@ class Stargate(Location):
         self.destination = destination
         self.distance = distance
 
-    def activate(self, player):
+    def activate(self, player, spaceship):
         # system change
         self.origin.remove_player(player)
         self.destination.add_player(player)
@@ -30,9 +33,11 @@ class Stargate(Location):
 
         player.distance_traveled += self.distance
         player.turns_until_idle += int(
-            math.ceil(self.distance / min(player.spaceship.engine, 1))
+            math.ceil(self.distance / min(spaceship.engine, 1))
         )
-        player.universe.total_distance_traveled += self.distance
+
+        universe = player_manager.get_universe(player.name)
+        universe.total_distance_traveled += self.distance
         logger.debug(
             f"{player.name} traveled from {self.origin.name} to {self.destination.name}"
         )

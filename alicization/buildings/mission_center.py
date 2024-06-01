@@ -11,11 +11,13 @@ import logging
 import numpy as np
 
 from .building import Building
+from ..managers.player_manager import PlayerManager
 from ..managers.leaderboard import Leaderboard
 
 logger = logging.getLogger(__name__)
 
 
+player_manager = PlayerManager()
 leaderboard = Leaderboard()
 
 MISSION_SUCCESS_BASE_DAMAGE = 50
@@ -100,35 +102,27 @@ class MissionCenter(Building):
         best_mission = max(available_missions, key=lambda mission: mission.reward)
         return best_mission
 
-    def apply_mission_random(self):
+    def apply_mission(self, order_by: int):
         if self.cooldown <= 0:
             available_missions = self.get_available_missions()
             if len(available_missions) > 0:
-                return random.choice(available_missions)
+                if order_by > 0:  # easiest first
+                    available_missions.sort(key=lambda m: m.difficulty)
+                    return available_missions[0]
+                elif order_by < 0:  # hardest first
+                    available_missions.sort(key=lambda m: m.difficulty, reverse=True)
+                    return available_missions[0]
+                else:
+                    return random.choice(available_missions)
+            return None
         return None
 
-    def apply_mission_easiet(self):
-        if self.cooldown <= 0:
-            available_missions = self.get_available_missions()
-            if len(available_missions) > 0:
-                available_missions.sort(key=lambda m: m.difficulty)
-                return available_missions[0]
-        return None
-
-    def apply_mission_hardest(self):
-        if self.cooldown <= 0:
-            available_missions = self.get_available_missions()
-            if len(available_missions) > 0:
-                available_missions.sort(key=lambda m: m.difficulty, reverse=True)
-                return available_missions[0]
-        return None
-
-    def do_mission(self, player, mission):
+    def do_mission(self, player, spaceship, mission):
         if self.cooldown > 0:
             return 0
 
         if mission in self.missions and mission.status == MissionStatus.OPEN:
-            if mission.difficulty > 0 and player.spaceship.weapon <= 0:
+            if mission.difficulty > 0 and spaceship.weapon <= 0:
                 return 0
 
             player.turns_until_idle += mission.difficulty
@@ -138,9 +132,10 @@ class MissionCenter(Building):
                     np.random.poisson(mission.difficulty * MISSION_SUCCESS_BASE_DAMAGE),
                     MAX_DAMAGE,
                 )
-                player.spaceship.take_damage(damage)
-                if player.spaceship.destroyed:
-                    player.current_system.make_debris(player.spaceship.cargo_hold)
+                spaceship.take_damage(damage)
+                if spaceship.destroyed:
+                    current_system = player_manager.get_system(player.name)
+                    current_system.make_debris(spaceship.cargo_hold)
                     player.die()
                     leaderboard.log_achievement(player.name, "death", 1)
                     result = 0
@@ -148,7 +143,9 @@ class MissionCenter(Building):
                     mission.status = MissionStatus.COMPLETED
                     player.earn(mission.reward)
                     player.mission_completed += 1
-                    player.universe.total_mission_completed += 1
+
+                    universe = player_manager.get_universe(player.name)
+                    universe.total_mission_completed += 1
                     player.skills["missioning"] = (
                         int(math.log(player.mission_completed) / math.log(math.sqrt(2)))
                         if player.mission_completed > 0
@@ -169,9 +166,10 @@ class MissionCenter(Building):
                     np.random.poisson(mission.difficulty * MISSION_FAIL_BASE_DAMAGE),
                     MAX_DAMAGE,
                 )
-                player.spaceship.take_damage(damage)
-                if player.spaceship.destroyed:
-                    player.current_system.make_debris(player.spaceship.cargo_hold)
+                spaceship.take_damage(damage)
+                if spaceship.destroyed:
+                    current_system = player_manager.get_system(player.name)
+                    current_system.make_debris(spaceship.cargo_hold)
                     player.die()
                     leaderboard.log_achievement(player.name, "death", 1)
                 result = 0

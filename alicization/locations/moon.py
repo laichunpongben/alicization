@@ -11,10 +11,12 @@ from .mineable import Mineable
 from ..buildings.hangar import Hangar
 from ..buildings.drydock import Drydock
 from ..buildings.mission_center import MissionCenter
+from ..managers.player_manager import PlayerManager
 from ..managers.material_manager import MaterialManager
 
 logger = logging.getLogger(__name__)
 
+player_manager = PlayerManager()
 material_manager = MaterialManager()
 
 BASE_MINE_AMOUNT = 100
@@ -42,8 +44,8 @@ class Moon(Location, Mineable):
             resources[material.name] = random.randint(range[0], range[1])
         return resources
 
-    def mine(self, player):
-        if player.spaceship.is_cargo_full():
+    def mine(self, player, spaceship):
+        if spaceship.is_cargo_full():
             return 0
 
         available_resources = [
@@ -59,8 +61,8 @@ class Moon(Location, Mineable):
 
         base_mined_amount = max(
             BASE_MINE_AMOUNT
-            * player.spaceship.mining
-            * (1 + player.spaceship.level / 10)
+            * spaceship.mining
+            * (1 + spaceship.level / 10)
             * (1 + player.skills["mining"] * 0.001),
             0,
         )
@@ -69,12 +71,14 @@ class Moon(Location, Mineable):
         mined_amount = min(mined_amount, self.resources[resource_to_mine])
 
         self.resources[resource_to_mine] -= mined_amount
-        player.spaceship.cargo_hold[resource_to_mine] += mined_amount
+        spaceship.cargo_hold[resource_to_mine] += mined_amount
 
         player.mining_completed += 1
         player.mined += mined_amount
         player.turn_production += mined_amount
-        player.universe.total_mined += mined_amount
+
+        universe = player_manager.get_universe(player.name)
+        universe.total_mined += mined_amount
         player.skills["mining"] = (
             int(math.log(player.mining_completed) / math.log(math.sqrt(2)))
             if player.mining_completed > 0
