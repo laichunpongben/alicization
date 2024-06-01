@@ -28,7 +28,7 @@ MAX_DISTANCE = 100
 
 
 class Universe:
-    def __init__(self, initial_systems):
+    def __init__(self, initial_systems: int):
         self.star_systems = []
         self._players = []
 
@@ -105,7 +105,7 @@ class Universe:
                 self.connect_systems(system1, system2, distance)
                 remaining_edges.remove((distance, system1, system2))
 
-    def connect_systems(self, system, neighbor, distance):
+    def connect_systems(self, system, neighbor, distance: int):
         stargate_to = Stargate(system, neighbor, distance)
         system.add_stargate(stargate_to)
         stargate_from = Stargate(neighbor, system, distance)

@@ -1,6 +1,7 @@
 # economy.py
 
 from collections import deque, defaultdict
+from typing import List
 import logging
 
 from .time_keeper import TimeKeeper
@@ -74,7 +75,7 @@ class Economy:
 
         return total_weighted_average / total_item_types if total_item_types > 0 else 1
 
-    def _get_base_price(self, item_type):
+    def _get_base_price(self, item_type: str):
         material = material_manager.get_material(item_type)
         if material:
             base_price = material_manager.guess_base_price(material.rarity)
@@ -87,7 +88,7 @@ class Economy:
                 base_price = MIN_UNIT_PRICE
         return base_price
 
-    def _calculate_weighted_average(self, transactions, base_price):
+    def _calculate_weighted_average(self, transactions: List, base_price: float):
         total_quantity = sum(t.quantity for t in transactions)
         deviation_total = sum((t.price / base_price) * t.quantity for t in transactions)
 

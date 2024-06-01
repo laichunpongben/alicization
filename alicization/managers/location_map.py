@@ -18,7 +18,7 @@ class LocationMap:
     def map(self):
         return self._map
 
-    def get_location(self, location_name):
+    def get_location(self, location_name: str):
         return self._map.get(location_name)
 
     def add_location(self, location):

@@ -3,6 +3,7 @@
 import math
 import logging
 from dataclasses import dataclass, field
+from collections import deque
 
 from ..locations.planet import Planet
 from ..locations.moon import Moon
@@ -230,7 +231,9 @@ class EMAData:
             self.k = 2 / (self.period + 1)
 
 
-def calculate_ema_ratio(history, turn_gain, short_ema_data, long_ema_data):
+def calculate_ema_ratio(
+    history: deque, turn_gain: float, short_ema_data: EMAData, long_ema_data: EMAData
+):
     if len(history) >= short_ema_data.period:
         short_ema_data.ema = update_ema(short_ema_data.ema, turn_gain, short_ema_data.k)
 
@@ -240,11 +243,11 @@ def calculate_ema_ratio(history, turn_gain, short_ema_data, long_ema_data):
     return compute_ema_ratio(short_ema_data.ema, long_ema_data.ema, history)
 
 
-def update_ema(current_ema, new_value, k):
+def update_ema(current_ema: float, new_value: float, k: int):
     return new_value if current_ema is None else new_value * k + current_ema * (1 - k)
 
 
-def compute_ema_ratio(short_ema, long_ema, history):
+def compute_ema_ratio(short_ema: float, long_ema: float, history: deque):
     if len(history) == history.maxlen and long_ema and short_ema and long_ema > 0:
         return min(max(short_ema / long_ema, 0.0001), 10000)
     return 1

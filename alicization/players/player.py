@@ -4,8 +4,7 @@ from collections import defaultdict, deque
 import logging
 
 from .enums.control import Control
-from ..managers.time_keeper import TimeKeeper
-from ..managers.player_manager import PlayerManager
+from .enums.goal import Goal
 from .policies.ai_action import (
     choose_action_index_symbolic_ai,
     choose_action_index_neural_ai,
@@ -25,6 +24,8 @@ from .util import (
     calculate_score,
     calculate_ema_ratio,
 )
+from ..managers.time_keeper import TimeKeeper
+from ..managers.player_manager import PlayerManager
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,14 @@ PRODUCTION_MEMORY = 10000
 
 
 class Player:
-    def __init__(self, name, control=Control.HUMAN, goal=None, willingness=1, memory=2):
+    def __init__(
+        self,
+        name: str,
+        control: Control = Control.HUMAN,
+        goal: Goal = None,
+        willingness: int = 1,
+        memory: int = 2,
+    ):
         self.name = name
         self.control = control
         self.wallet = 0
@@ -123,7 +131,6 @@ class Player:
         logger.warning(f"{self.name} respawned at {home_system.name}")
 
     def act(self):
-        # Handle different control types
         if self.control in [
             Control.NEURAL_AI,
             Control.SYMBOLIC_AI,
@@ -138,10 +145,9 @@ class Player:
             if self.control == Control.NEURAL_AI:
                 self.update_memory_and_learn(state_before_action, action_index)
         else:
-            pass  # Or handle other cases
+            pass
 
     def choose_action_index(self):
-        # Decide action index based on control type
         if self.turns_until_idle <= 0:
             if self.control == Control.NEURAL_AI:
                 return choose_action_index_neural_ai(self)
@@ -182,7 +188,7 @@ class Player:
 
         self.turns_until_idle = max(self.turns_until_idle - 1, 0)
 
-    def update_memory_and_learn(self, state_before_action, action_index):
+    def update_memory_and_learn(self, state_before_action, action_index: int):
         next_full_state = get_full_state(self)
         self.state_memory.append(next_full_state)
 

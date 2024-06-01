@@ -74,7 +74,7 @@ class MissionCenter(Building):
         except Exception as e:
             logger.error(f"Error loading missions: {e}")
 
-    def add_mission(self, description, difficulty, reward):
+    def add_mission(self, description: str, difficulty: int, reward: float):
         mission = Mission(description, difficulty, reward)
         self.missions.append(mission)
 
@@ -178,7 +178,7 @@ class MissionCenter(Building):
         else:
             return 0
 
-    def mission_success(self, difficulty, skill_level):
+    def mission_success(self, difficulty: int, skill_level: int):
         success_chance = max(
             0, min(0.75 * (1 + skill_level * 0.001), 0.9999) ** difficulty
         )

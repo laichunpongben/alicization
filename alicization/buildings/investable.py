@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 import math
 from collections import defaultdict
+from typing import Optional
 import logging
 
 from ..managers.leaderboard import Leaderboard
@@ -88,7 +89,7 @@ class Investable(ABC):
 
         return payout
 
-    def _calculate_level(self, investment):
+    def _calculate_level(self, investment: float):
         return int(math.log10(investment)) if investment > 0 else 0
 
     def _get_investment_ratio(self, player):
@@ -98,7 +99,9 @@ class Investable(ABC):
             else 0
         )
 
-    def _update_monopoly_status(self, player, before_monopoly, before_owner):
+    def _update_monopoly_status(
+        self, player, before_monopoly: bool, before_owner: Optional[str]
+    ):
         ratio = self._get_investment_ratio(player)
         if ratio >= MONOPOLY_THRESHOLD:
             self._set_monopoly(player)
@@ -119,7 +122,7 @@ class Investable(ABC):
         leaderboard.log_achievement(player.name, "monopoly", MONOPOLY_SCORE)
         logger.warning(f"{player.name} gained monopoly on {self.name}")
 
-    def _clear_monopoly(self, before_monopoly, before_owner):
+    def _clear_monopoly(self, before_monopoly: bool, before_owner: Optional[str]):
         self._monopoly = False
         self._owner = None
         self._owner_investment = 0

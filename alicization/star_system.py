@@ -16,7 +16,7 @@ player_manager = PlayerManager()
 
 
 class StarSystem:
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
         self.planets = [Planet() for _ in range(random.randint(0, 5))]
         self.moons = (
@@ -48,7 +48,7 @@ class StarSystem:
         if stargate not in self.stargates:
             self.stargates.append(stargate)
 
-    def make_debris(self, cargo):
+    def make_debris(self, cargo: dict):
         debris = Debris()
         debris.add(cargo)
         self.debrises.append(debris)

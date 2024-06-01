@@ -2,6 +2,7 @@
 
 from collections import deque
 import random
+from typing import List
 
 import numpy as np
 import torch
@@ -11,7 +12,7 @@ import torch.nn.functional as F
 
 
 class DQN(nn.Module):
-    def __init__(self, input_size, hidden_sizes, output_size):
+    def __init__(self, input_size: int, hidden_sizes: List[int], output_size: int):
         super(DQN, self).__init__()
         self.layers = nn.ModuleList()
         self.layers.append(nn.Linear(input_size, hidden_sizes[0]))
@@ -27,13 +28,13 @@ class DQN(nn.Module):
 
 
 class ReplayMemory:
-    def __init__(self, capacity):
+    def __init__(self, capacity: int):
         self.memory = deque([], maxlen=capacity)
 
-    def push(self, state, action, reward, next_state, done):
+    def push(self, state, action: int, reward: float, next_state, done: bool):
         self.memory.append((state, action, reward, next_state, done))
 
-    def sample(self, batch_size):
+    def sample(self, batch_size: int):
         return random.sample(self.memory, batch_size)
 
     def __len__(self):

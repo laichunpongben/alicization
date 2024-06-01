@@ -43,6 +43,6 @@ class BlueprintManager:
             logger.error(f"Error loading blueprints: {e}")
         return blueprints
 
-    def get_blueprint(self, name):
+    def get_blueprint(self, name: str):
         components = self.blueprints.get(name, {})
         return Blueprint(name=name, components=components)

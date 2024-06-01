@@ -1,9 +1,10 @@
 # util.py
 
 import heapq
+from typing import List
 
 
-def calculate_minimum_distance(star_systems, start_system, end_system):
+def calculate_minimum_distance(star_systems: List, start_system, end_system):
     if start_system == end_system:
         return 0
 

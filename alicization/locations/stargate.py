@@ -12,7 +12,7 @@ player_manager = PlayerManager()
 
 
 class Stargate(Location):
-    def __init__(self, origin, destination, distance):
+    def __init__(self, origin, destination, distance: int):
         name = f"Stargate: {origin.name} -> {destination.name}"
         Location.__init__(self, name)
         self.origin = origin

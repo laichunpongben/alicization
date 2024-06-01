@@ -44,20 +44,20 @@ class MaterialManager:
     def get_all_meterials(self):
         return list(self._materials.values())
 
-    def get_material(self, name):
+    def get_material(self, name: str):
         return self._materials.get(name)
 
-    def get_rarity(self, name):
+    def get_rarity(self, name: str):
         material = self.get_material(name)
         if material:
             return material.rarity
         else:
             return 1
 
-    def guess_base_price(self, rarity):
+    def guess_base_price(self, rarity: int):
         return 2 ** (max(rarity - 1, 0))
 
-    def random_material(self, max_rarity=5):
+    def random_material(self, max_rarity: int = 5):
         return random.choice(
             [m for m in self._materials.values() if m.rarity <= max_rarity]
         )

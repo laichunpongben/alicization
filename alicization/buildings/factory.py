@@ -32,7 +32,7 @@ class Factory(Building, Investable):
         Investable.__init__(self)
         self.name = f"Factory {uuid.uuid4().hex}"
 
-    def manufacture(self, player, blueprint_name):
+    def manufacture(self, player, blueprint_name: str):
         if self._cooldown > 0:
             return False
 

@@ -19,7 +19,7 @@ class Debris(Location):
         Location.__init__(self)
         self.resources = defaultdict(int)
 
-    def add(self, cargo):
+    def add(self, cargo: dict):
         if cargo:
             for item, count in cargo.items():
                 if random.random() < P_DEBRIS_ADD:
@@ -43,7 +43,7 @@ class Debris(Location):
         else:
             logger.warning("Empty debris!")
 
-    def salvage_success(self, skill_level):
+    def salvage_success(self, skill_level: int):
         success_chance = max(0, min(0.9 * (1 + skill_level * 0.001), 0.9999))
         return random.random() < success_chance
 
