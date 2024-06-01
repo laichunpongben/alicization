@@ -10,16 +10,12 @@ from .star_system import StarSystem
 from .locations.stargate import Stargate
 from .managers.time_keeper import TimeKeeper
 from .managers.player_manager import PlayerManager
-from .managers.material_manager import MaterialManager
-from .managers.spaceship_manager import SpaceshipManager
 from .managers.economy import Economy
 
 logger = logging.getLogger(__name__)
 
 time_keeper = TimeKeeper()
 player_manager = PlayerManager()
-material_manager = MaterialManager()
-spaceship_manager = SpaceshipManager()
 economy = Economy()
 
 MAX_CONNECTIONS = 5
