@@ -16,7 +16,8 @@ P_DEBRIS_ADD = 0.9
 
 class Debris(Location):
     def __init__(self):
-        Location.__init__(self)
+        name = f"Debris {uuid.uuid4().hex}"
+        Location.__init__(self, name)
         self._resources = defaultdict(int)
 
     @property
