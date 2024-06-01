@@ -159,7 +159,7 @@ class Marketplace(Building, Investable):
                     if bid_order.price >= ask_order.buyout_price:
                         trade_quantity = min(bid_order.quantity, ask_order.quantity)
                         trade_price = min(bid_order.price, ask_order.buyout_price)
-                        self.execute_order(
+                        self._execute_order(
                             bid_order, ask_order, trade_quantity, trade_price
                         )
                         if ask_order.quantity == 0:
@@ -173,7 +173,7 @@ class Marketplace(Building, Investable):
             for bid_order in matched_bids:
                 bid_orders.remove(bid_order)
 
-    def execute_order(
+    def _execute_order(
         self, bid_order: BidOrder, ask_order: AskOrder, quantity: int, price: float
     ):
         bid_order.quantity -= quantity
@@ -233,13 +233,13 @@ class Marketplace(Building, Investable):
             f"Transaction completed for {item_type}: {quantity}@{price} between {bid_order.player} and {ask_order.player}"
         )
 
-    def cancel_bid_order(self, bid_order: BidOrder):
+    def _cancel_bid_order(self, bid_order: BidOrder):
         buyer = player_manager.get_player(bid_order.player)
         refund = bid_order.quantity * bid_order.price
         buyer.unspend(refund)
         self.wallet[buyer.name] -= refund  # reserve release
 
-    def cancel_ask_order(self, ask_order: AskOrder):
+    def _cancel_ask_order(self, ask_order: AskOrder):
         storage = location_map.get_location(ask_order.location).storage
         seller_name = ask_order.player
         item_type = ask_order.item_type
@@ -262,8 +262,8 @@ class Marketplace(Building, Investable):
                 if ask_order.expiry <= time_keeper.turn
             ]
             for ask_order in expired_ask_orders:
-                self.match_expired_ask_order(item_type, ask_order)
-                self.cancel_ask_order(ask_order)
+                self._match_expired_ask_order(item_type, ask_order)
+                self._cancel_ask_order(ask_order)
 
         for item_type, bid_orders in self.bid_orders.items():
             self.bid_orders[item_type] = [
@@ -277,16 +277,16 @@ class Marketplace(Building, Investable):
                 if bid_order.expiry <= time_keeper.turn
             ]
             for bid_order in expired_bid_orders:
-                self.cancel_bid_order(bid_order)
+                self._cancel_bid_order(bid_order)
 
-    def match_expired_ask_order(self, item_type: str, ask_order: AskOrder):
+    def _match_expired_ask_order(self, item_type: str, ask_order: AskOrder):
         bid_orders = self.bid_orders[item_type]
         for bid_order in bid_orders:
             if bid_order.price >= ask_order.min_price:
                 trade_quantity = min(bid_order.quantity, ask_order.quantity)
                 trade_price = max(bid_order.price, ask_order.min_price)
 
-                self.execute_order(bid_order, ask_order, trade_quantity, trade_price)
+                self._execute_order(bid_order, ask_order, trade_quantity, trade_price)
 
                 if ask_order.quantity == 0:
                     break

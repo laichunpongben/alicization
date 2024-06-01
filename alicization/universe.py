@@ -44,7 +44,7 @@ class Universe:
         for _ in range(initial_systems):
             self.add_star_system()
 
-        self.create_sparse_graph()
+        self._create_sparse_graph()
 
     @property
     def players(self):
@@ -62,7 +62,7 @@ class Universe:
         new_system = StarSystem(f"System {len(self.star_systems)}")
         self.star_systems.append(new_system)
 
-    def create_sparse_graph(self):
+    def _create_sparse_graph(self):
         # Use Prim's algorithm to create a Minimum Spanning Tree (MST)
         mst_edges = []
         visited = set()
@@ -85,7 +85,7 @@ class Universe:
             system.stargates = []
 
         for distance, system1, system2 in mst_edges:
-            self.connect_systems(system1, system2, distance)
+            self._connect_systems(system1, system2, distance)
 
         remaining_edges = [
             (random.randint(1, 10), system1, system2)
@@ -98,10 +98,10 @@ class Universe:
         for _ in range(additional_edges):
             if remaining_edges:
                 distance, system1, system2 = random.choice(remaining_edges)
-                self.connect_systems(system1, system2, distance)
+                self._connect_systems(system1, system2, distance)
                 remaining_edges.remove((distance, system1, system2))
 
-    def connect_systems(self, system, neighbor, distance: int):
+    def _connect_systems(self, system, neighbor, distance: int):
         stargate_to = Stargate(system, neighbor, distance)
         system.add_stargate(stargate_to)
         stargate_from = Stargate(neighbor, system, distance)
@@ -116,7 +116,7 @@ class Universe:
             or self.total_damage_dealt >= expand_threshold_large
             or self.total_spending >= expand_threshold_large
         ):
-            self.expand_universe()
+            self._expand_universe()
 
         for system in self.star_systems:
             for belt in system.asteroid_belts:
@@ -152,12 +152,12 @@ class Universe:
         economy.update_stats()
         self.galactic_price_index = economy.galactic_price_index
 
-        self.galactic_affordability = self.calculate_galactic_affordability()
-        self.galactic_productivity = self.calculate_galactic_productivity()
+        self.galactic_affordability = self._calculate_galactic_affordability()
+        self.galactic_productivity = self._calculate_galactic_productivity()
 
         time_keeper.tick()
 
-    def expand_universe(self):
+    def _expand_universe(self):
         self.add_star_system()
         new_system = self.star_systems[-1]
         connected_systems = [
@@ -169,7 +169,7 @@ class Universe:
         if connected_systems:
             initial_connection = random.choice(connected_systems)
             distance = int(np.random.uniform(1, 10))
-            self.connect_systems(new_system, initial_connection, distance)
+            self._connect_systems(new_system, initial_connection, distance)
 
             num_connections = min(
                 np.random.poisson(0, 1)[0], len(connected_systems) - 1, MAX_CONNECTIONS
@@ -185,7 +185,7 @@ class Universe:
                     and len(new_system.stargates) < MAX_CONNECTIONS
                 ):
                     distance = random.randint(1, MAX_DISTANCE)
-                    self.connect_systems(system, new_system, distance)
+                    self._connect_systems(system, new_system, distance)
 
         logger.info(f"New star system added: {new_system.name}")
 
@@ -199,14 +199,14 @@ class Universe:
         for player in self._players:
             player.total_investment = player.calculate_total_investment()
 
-    def calculate_galactic_affordability(self):
+    def _calculate_galactic_affordability(self):
         return (
             sum(player.affordability for player in self._players) / len(self._players)
             if len(self._players) > 0
             else 1
         )
 
-    def calculate_galactic_productivity(self):
+    def _calculate_galactic_productivity(self):
         return (
             sum(player.productivity for player in self._players) / len(self._players)
             if len(self._players) > 0

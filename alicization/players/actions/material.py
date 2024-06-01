@@ -36,7 +36,7 @@ def can_mine(current_location, spaceship):
         isinstance(current_location, Mineable)
         and not spaceship.is_cargo_full()
         and spaceship.weapon <= 0
-        and any(amount > 0 for amount in current_location.get_resources().values())
+        and any(amount > 0 for amount in current_location.resources.values())
     )
 
 

@@ -40,10 +40,10 @@ class SpaceshipManager:
                 spaceships_file = (
                     Path(__file__).resolve().parent.parent / "data" / "spaceships.csv"
                 )
-            cls.__instance.spaceships = cls.__instance.load_spaceships(spaceships_file)
+            cls.__instance.spaceships = cls.__instance._load_spaceships(spaceships_file)
         return cls.__instance
 
-    def load_spaceships(self, spaceships_file):
+    def _load_spaceships(self, spaceships_file):
         spaceships = {}
         try:
             with open(spaceships_file, newline="") as csvfile:

@@ -1,4 +1,4 @@
-# empty_space.py
+# locations/empty_space.py
 
 import uuid
 import logging

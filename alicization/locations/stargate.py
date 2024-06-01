@@ -1,4 +1,4 @@
-# stargate.py
+# locations/stargate.py
 
 import math
 import logging
@@ -25,7 +25,7 @@ class Stargate(Location):
         self.destination.add_player(player)
 
         self.remove_player(player)
-        target_stargate = self.find_target_stargate(self.destination, self.origin)
+        target_stargate = self._find_target_stargate(self.destination, self.origin)
         if target_stargate is not None:
             target_stargate.add_player(player)
         else:
@@ -42,7 +42,7 @@ class Stargate(Location):
             f"{player.name} traveled from {self.origin.name} to {self.destination.name}"
         )
 
-    def find_target_stargate(self, target_system, current_system):
+    def _find_target_stargate(self, target_system, current_system):
         if len(target_system.stargates) > 0:
             for stargate in target_system.stargates:
                 if stargate.destination == current_system:

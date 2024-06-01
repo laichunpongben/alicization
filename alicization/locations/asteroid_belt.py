@@ -1,4 +1,4 @@
-# asteroid_belt.py
+# locations/asteroid_belt.py
 
 import random
 import math
@@ -34,9 +34,13 @@ class AsteroidBelt(Location, Mineable):
     def __init__(self):
         Location.__init__(self)
         Mineable.__init__(self)
-        self.resources = self.load_initial_resources()
+        self._resources = self._load_initial_resources()
 
-    def load_initial_resources(self):
+    @property
+    def resources(self):
+        return self._resources
+
+    def _load_initial_resources(self):
         resources = {}
         available_materials = material_manager.get_all_meterials()
         sorted_materials = sorted(available_materials, key=lambda x: x.rarity)
@@ -62,13 +66,13 @@ class AsteroidBelt(Location, Mineable):
         return resources
 
     def mine(self, player, spaceship):
-        self.check_crash(player, spaceship)
+        self._check_crash(player, spaceship)
 
         if spaceship.is_cargo_full():
             return 0
 
         available_resources = [
-            resource for resource in self.resources if self.resources[resource] > 0
+            resource for resource in self._resources if self._resources[resource] > 0
         ]
         if not available_resources:
             return 0
@@ -87,9 +91,9 @@ class AsteroidBelt(Location, Mineable):
         )
         rarity_effect = 1 / (1 + np.log1p(material.rarity))
         mined_amount = np.random.binomial(base_mined_amount / 10, rarity_effect) * 10
-        mined_amount = min(mined_amount, self.resources[resource_to_mine])
+        mined_amount = min(mined_amount, self._resources[resource_to_mine])
 
-        self.resources[resource_to_mine] -= mined_amount
+        self._resources[resource_to_mine] -= mined_amount
         spaceship.cargo_hold[resource_to_mine] += mined_amount
 
         player.mining_completed += 1
@@ -106,7 +110,7 @@ class AsteroidBelt(Location, Mineable):
 
         return 1
 
-    def check_crash(self, player, spaceship):
+    def _check_crash(self, player, spaceship):
         skill_level = player.skills["mining"]
         p_crash = P_CRASH_BASE * max(1 - skill_level * 0.001, 0.01)
         if random.random() < p_crash:
@@ -117,20 +121,17 @@ class AsteroidBelt(Location, Mineable):
                 leaderboard.log_achievement(player.name, "death", 1)
                 player.die()
 
-    def get_resources(self):
-        return self.resources
-
     def respawn_resources(self):
         if all(
-            amount == 0 for amount in self.resources.values()
+            amount == 0 for amount in self._resources.values()
         ):  # All resources depleted
             if random.random() < P_RESWAPN:
-                self.resources = self.load_initial_resources()
+                self._resources = self._load_initial_resources()
                 logger.debug(
-                    f"Resources respawned in {self.name} with {self.resources}"
+                    f"Resources respawned in {self.name} with {self._resources}"
                 )
 
     def debug_print(self):
         logger.info(f"Asteroid Belt: {self.name}")
-        logger.info(f"Resources: {self.resources}")
+        logger.info(f"Resources: {self._resources}")
         logger.info(f"Players: {self.players}")

@@ -1,4 +1,4 @@
-# location.py
+# locations/location.py
 
 from abc import ABC, abstractmethod
 import uuid

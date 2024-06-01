@@ -215,7 +215,7 @@ class Spaceship(ABC):
     def calc_upgrade_cost(self):
         return (1 + self._level / 2) * self._base_upgrade_cost
 
-    def calculate_cargo_size(self):
+    def _calculate_cargo_size(self):
         cargo_size = 0
         for item, quantity in self._cargo_hold.items():
             material = material_manager.get_material(item)
@@ -228,14 +228,14 @@ class Spaceship(ABC):
         return cargo_size
 
     def update_cargo_size(self):
-        self._cargo_size = self.calculate_cargo_size()
+        self._cargo_size = self._calculate_cargo_size()
 
     def is_cargo_full(self):
-        cargo_size = self.calculate_cargo_size()
+        cargo_size = self._calculate_cargo_size()
         return cargo_size >= self._max_cargo_size
 
     def is_cargo_empty(self):
-        cargo_size = self.calculate_cargo_size()
+        cargo_size = self._calculate_cargo_size()
         return cargo_size <= 0
 
     def upgrade(self):

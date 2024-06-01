@@ -24,10 +24,10 @@ class BlueprintManager:
                 blueprint_file = (
                     Path(__file__).resolve().parent.parent / "data" / "blueprints.csv"
                 )
-            cls.__instance.blueprints = cls.__instance.load_blueprints(blueprint_file)
+            cls.__instance.blueprints = cls.__instance._load_blueprints(blueprint_file)
         return cls.__instance
 
-    def load_blueprints(self, blueprint_file):
+    def _load_blueprints(self, blueprint_file):
         blueprints = {}
         try:
             with open(blueprint_file, newline="") as csvfile:

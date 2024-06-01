@@ -59,7 +59,7 @@ class Factory(Building, Investable):
             earning = job_cost * min(BASE_EARNING_RATIO * (1 + self.level * 0.01), 1)
             self._distribute_earnings(earning)
 
-            if self.job_success():
+            if self._job_success():
                 current_location.storage.add_item(player.name, blueprint_name, 1)
                 player.build += 1
                 player.turn_production += int(base_price * PRODUCTION_ESTIMATE)
@@ -83,7 +83,7 @@ class Factory(Building, Investable):
 
         return False
 
-    def job_success(self):
+    def _job_success(self):
         return random.random() < min(
             P_JOB_SUCCESS_BASE * (1 + self.level * 0.01), 0.9999
         )

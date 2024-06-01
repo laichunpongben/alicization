@@ -136,18 +136,18 @@ class Player:
             Control.SYMBOLIC_AI,
             Control.RANDOM_WALK_AI,
         ]:
-            action_index = self.choose_action_index()
+            action_index = self._choose_action_index()
             if self.control == Control.NEURAL_AI:
                 state_before_action = get_reduced_state(self)
             perform_action(self, action_index)
             self.health_check()
             self.update_stats()
             if self.control == Control.NEURAL_AI:
-                self.update_memory_and_learn(state_before_action, action_index)
+                self._update_memory_and_learn(state_before_action, action_index)
         else:
             pass
 
-    def choose_action_index(self):
+    def _choose_action_index(self):
         if self.turns_until_idle <= 0:
             if self.control == Control.NEURAL_AI:
                 return choose_action_index_neural_ai(self)
@@ -188,7 +188,7 @@ class Player:
 
         self.turns_until_idle = max(self.turns_until_idle - 1, 0)
 
-    def update_memory_and_learn(self, state_before_action, action_index: int):
+    def _update_memory_and_learn(self, state_before_action, action_index: int):
         next_full_state = get_full_state(self)
         self.state_memory.append(next_full_state)
 

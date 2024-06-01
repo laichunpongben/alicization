@@ -1,4 +1,4 @@
-# moon.py
+# locations/moon.py
 
 import random
 import math
@@ -26,13 +26,17 @@ class Moon(Location, Mineable):
     def __init__(self):
         Location.__init__(self)
         Mineable.__init__(self)
-        self.resources = self.load_initial_resources()
+        self._resources = self._load_initial_resources()
         self.hangar = Hangar()
         self.drydock = Drydock()
         self.mission_center = MissionCenter()
         self._buildings = [self.hangar, self.drydock, self.mission_center]
 
-    def load_initial_resources(self):
+    @property
+    def resources(self):
+        return self._resources
+
+    def _load_initial_resources(self):
         resources = {}
         moon_resource_ranges = {
             "helium": (1, 1000000000),
@@ -49,7 +53,7 @@ class Moon(Location, Mineable):
             return 0
 
         available_resources = [
-            resource for resource in self.resources if self.resources[resource] > 0
+            resource for resource in self._resources if self._resources[resource] > 0
         ]
         if not available_resources:
             return 0
@@ -68,9 +72,9 @@ class Moon(Location, Mineable):
         )
         rarity_effect = 1 / (1 + np.log1p(material.rarity))
         mined_amount = np.random.binomial(base_mined_amount / 10, rarity_effect) * 10
-        mined_amount = min(mined_amount, self.resources[resource_to_mine])
+        mined_amount = min(mined_amount, self._resources[resource_to_mine])
 
-        self.resources[resource_to_mine] -= mined_amount
+        self._resources[resource_to_mine] -= mined_amount
         spaceship.cargo_hold[resource_to_mine] += mined_amount
 
         player.mining_completed += 1
@@ -87,10 +91,7 @@ class Moon(Location, Mineable):
 
         return 1
 
-    def get_resources(self):
-        return self.resources
-
     def debug_print(self):
         logger.info(f"Moon: {self.name}")
-        logger.info(f"Resources: {self.resources}")
+        logger.info(f"Resources: {self._resources}")
         logger.info(f"Players: {self.players}")

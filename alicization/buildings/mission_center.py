@@ -56,9 +56,9 @@ class MissionCenter(Building):
             )
         else:
             self.missions_file = missions_file
-        self.load_missions_from_csv(self.missions_file)
+        self._load_missions_from_csv(self.missions_file)
 
-    def load_missions_from_csv(self, missions_file, count=NUM_MISSION):
+    def _load_missions_from_csv(self, missions_file, count=NUM_MISSION):
         try:
             with open(missions_file, mode="r", newline="", encoding="utf-8") as file:
                 reader = csv.DictReader(file)
@@ -68,13 +68,13 @@ class MissionCenter(Building):
                 ]
                 random.shuffle(all_missions)
                 for description, difficulty, reward in all_missions[:count]:
-                    self.add_mission(description, difficulty, reward)
+                    self._add_mission(description, difficulty, reward)
         except FileNotFoundError:
             logger.error(f"Mission file '{missions_file}' not found.")
         except Exception as e:
             logger.error(f"Error loading missions: {e}")
 
-    def add_mission(self, description: str, difficulty: int, reward: float):
+    def _add_mission(self, description: str, difficulty: int, reward: float):
         mission = Mission(description, difficulty, reward)
         self.missions.append(mission)
 
@@ -127,7 +127,7 @@ class MissionCenter(Building):
 
             player.turns_until_idle += mission.difficulty
             skill_level = player.skills["missioning"]
-            if self.mission_success(mission.difficulty, skill_level):
+            if self._mission_success(mission.difficulty, skill_level):
                 damage = min(
                     np.random.poisson(mission.difficulty * MISSION_SUCCESS_BASE_DAMAGE),
                     MAX_DAMAGE,
@@ -178,7 +178,7 @@ class MissionCenter(Building):
         else:
             return 0
 
-    def mission_success(self, difficulty: int, skill_level: int):
+    def _mission_success(self, difficulty: int, skill_level: int):
         success_chance = max(
             0, min(0.75 * (1 + skill_level * 0.001), 0.9999) ** difficulty
         )
@@ -187,7 +187,7 @@ class MissionCenter(Building):
     def respawn_missions(self):
         mission_count = len(self.get_available_missions())
         if mission_count < NUM_MISSION and random.random() < 0.1:
-            self.load_missions_from_csv(
+            self._load_missions_from_csv(
                 self.missions_file, count=NUM_MISSION - mission_count
             )
             logger.debug(f"Missions respawned in {self.name}")
@@ -196,7 +196,7 @@ class MissionCenter(Building):
                 missions = self.get_available_missions()
                 mission_to_cancel = random.choice(missions)
                 mission_to_cancel.status = MissionStatus.CANCELED
-                self.load_missions_from_csv(self.missions_file, count=1)
+                self._load_missions_from_csv(self.missions_file, count=1)
                 logger.debug(f"Mission {mission_to_cancel} replaced in {self.name}")
 
     def clean_up(self):

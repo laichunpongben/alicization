@@ -276,8 +276,8 @@ def calculate_reward(player, goal, learning_rate, state_memory):
             if len(state_memory) > 1
             else 0
         )
-        health_reward = calculate_health_reward(learning_rate, state_memory)
-        death_penalty = calculate_death_penalty(learning_rate, state_memory)
+        health_reward = _calculate_health_reward(learning_rate, state_memory)
+        death_penalty = _calculate_death_penalty(learning_rate, state_memory)
         total_reward = net_worth_reward + health_reward - death_penalty - 0.0001
         logger.debug(f"{player.name} Total Reward: {total_reward}")
         return total_reward
@@ -287,8 +287,8 @@ def calculate_reward(player, goal, learning_rate, state_memory):
             if len(state_memory) > 1
             else 0
         )
-        health_reward = calculate_health_reward(learning_rate, state_memory)
-        death_penalty = calculate_death_penalty(learning_rate, state_memory)
+        health_reward = _calculate_health_reward(learning_rate, state_memory)
+        death_penalty = _calculate_death_penalty(learning_rate, state_memory)
         total_reward = kill_reward + health_reward - death_penalty - 0.0001
         logger.debug(f"{player.name} Total Reward: {total_reward}")
         return total_reward
@@ -302,8 +302,8 @@ def calculate_reward(player, goal, learning_rate, state_memory):
             if len(state_memory) > 1
             else 0
         )
-        health_reward = calculate_health_reward(learning_rate, state_memory)
-        death_penalty = calculate_death_penalty(learning_rate, state_memory)
+        health_reward = _calculate_health_reward(learning_rate, state_memory)
+        death_penalty = _calculate_death_penalty(learning_rate, state_memory)
         total_reward = damage_reward + health_reward - death_penalty - 0.0001
         logger.debug(f"{player.name} Total Reward: {total_reward}")
         return total_reward
@@ -317,8 +317,8 @@ def calculate_reward(player, goal, learning_rate, state_memory):
             if len(state_memory) > 1
             else 0
         )
-        health_reward = calculate_health_reward(learning_rate, state_memory)
-        death_penalty = calculate_death_penalty(learning_rate, state_memory)
+        health_reward = _calculate_health_reward(learning_rate, state_memory)
+        death_penalty = _calculate_death_penalty(learning_rate, state_memory)
         total_reward = mission_reward + health_reward - death_penalty - 0.0001
         logger.debug(f"{player.name} Total Reward: {total_reward}")
         return total_reward
@@ -328,8 +328,8 @@ def calculate_reward(player, goal, learning_rate, state_memory):
             if len(state_memory) > 1
             else 0
         )
-        health_reward = calculate_health_reward(learning_rate, state_memory)
-        death_penalty = calculate_death_penalty(learning_rate, state_memory)
+        health_reward = _calculate_health_reward(learning_rate, state_memory)
+        death_penalty = _calculate_death_penalty(learning_rate, state_memory)
         total_reward = score_reward + health_reward - death_penalty - 0.0001
         logger.debug(f"{player.name} Total Reward: {total_reward}")
         return total_reward
@@ -338,7 +338,7 @@ def calculate_reward(player, goal, learning_rate, state_memory):
         return -0.0001
 
 
-def calculate_death_penalty(learning_rate, state_memory):
+def _calculate_death_penalty(learning_rate, state_memory):
     return (
         0.01 * learning_rate * (state_memory[-1]["death"] - state_memory[0]["death"])
         if len(state_memory) > 1
@@ -346,7 +346,7 @@ def calculate_death_penalty(learning_rate, state_memory):
     )
 
 
-def calculate_health_reward(learning_rate, state_memory):
+def _calculate_health_reward(learning_rate, state_memory):
     return (
         0.0001
         * learning_rate
