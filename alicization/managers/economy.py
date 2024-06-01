@@ -48,13 +48,13 @@ class Economy:
     def galactic_price_index(self):
         return self._galactic_price_index
 
-    def push_transaction(self, transaction):
+    def push_transaction(self, transaction) -> None:
         item_type = transaction.item_type
         self._transactions[item_type].append(transaction)
         self._total_transaction += 1
         self._total_trade_revenue += transaction.quantity * transaction.price
 
-    def update_stats(self):
+    def update_stats(self) -> None:
         self._galactic_price_index = self._calculate_galactic_price_index()
 
     def _calculate_galactic_price_index(self):

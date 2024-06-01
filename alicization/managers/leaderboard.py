@@ -2,6 +2,7 @@
 
 import heapq
 from collections import defaultdict
+from typing import List
 
 
 class Leaderboard:
@@ -15,7 +16,7 @@ class Leaderboard:
 
     def log_achievement(
         self, player_name: str, achievement: str, value: float, overwrite: bool = False
-    ):
+    ) -> None:
         if achievement not in self.achievements:
             self.achievements[achievement] = defaultdict(float)
         if overwrite:
@@ -23,13 +24,13 @@ class Leaderboard:
         else:
             self.achievements[achievement][player_name] += value
 
-    def get_achievement_score(self, player_name: str, achievement: str):
+    def get_achievement_score(self, player_name: str, achievement: str) -> float:
         if achievement in self.achievements:
             return self.achievements[achievement][player_name]
         else:
             return 0
 
-    def get_top_leaders(self, achievement: str, top_n: int = 10):
+    def get_top_leaders(self, achievement: str, top_n: int = 10) -> List:
         if achievement not in self.achievements:
             return []
 

@@ -14,7 +14,7 @@ class Storage(Building):
         self.name = f"Storage {uuid.uuid4().hex}"
         self.inventory = {}
 
-    def add_item(self, player_name: str, item: str, qty: int):
+    def add_item(self, player_name: str, item: str, qty: int) -> None:
         if player_name not in self.inventory:
             self.inventory[player_name] = {}
 
@@ -25,7 +25,7 @@ class Storage(Building):
 
         logger.info(f"Added {qty} of {item} to player {player_name}'s storage.")
 
-    def remove_item(self, player_name: str, item: str, qty: int):
+    def remove_item(self, player_name: str, item: str, qty: int) -> None:
         if player_name not in self.inventory or item not in self.inventory[player_name]:
             logger.warning(
                 f"Player {player_name} does not have {item} in their storage."
@@ -43,10 +43,10 @@ class Storage(Building):
         logger.info(f"Removed {qty} of {item} from player {player_name}'s storage.")
         return True
 
-    def get_item(self, player_name: str, item: str):
+    def get_item(self, player_name: str, item: str) -> int:
         return self.inventory.get(player_name, {}).get(item, 0)
 
-    def get_inventory(self, player_name: str):
+    def get_inventory(self, player_name: str) -> dict:
         return self.inventory.get(player_name, {})
 
     def destroy(self):

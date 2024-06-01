@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 player_manager = PlayerManager()
 
 
-def do_mission(player, difficulty: str):
+def do_mission(player, difficulty: str) -> None:
     current_location = player_manager.get_location(player.name)
     spaceship = player_manager.get_spaceship(player.name)
     if can_mission(current_location):
@@ -34,7 +34,7 @@ def do_mission(player, difficulty: str):
         logger.warning("Cannot do mission from this location.")
 
 
-def can_mission(current_location):
+def can_mission(current_location) -> bool:
     return (
         current_location.has_mission_center()
         and len(current_location.mission_center.get_available_missions()) > 0

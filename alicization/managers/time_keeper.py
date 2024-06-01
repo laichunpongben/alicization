@@ -14,5 +14,5 @@ class TimeKeeper:
     def turn(self):
         return self._turn
 
-    def tick(self):
+    def tick(self) -> None:
         self._turn += 1

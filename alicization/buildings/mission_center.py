@@ -6,6 +6,7 @@ import random
 import math
 from pathlib import Path
 from enum import Enum
+from typing import List
 import logging
 
 import numpy as np
@@ -78,7 +79,7 @@ class MissionCenter(Building):
         mission = Mission(description, difficulty, reward)
         self.missions.append(mission)
 
-    def get_available_missions(self):
+    def get_available_missions(self) -> List:
         return [
             mission for mission in self.missions if mission.status == MissionStatus.OPEN
         ]
@@ -102,7 +103,7 @@ class MissionCenter(Building):
         best_mission = max(available_missions, key=lambda mission: mission.reward)
         return best_mission
 
-    def apply_mission(self, order_by: int):
+    def apply_mission(self, order_by: int) -> None:
         if self.cooldown <= 0:
             available_missions = self.get_available_missions()
             if len(available_missions) > 0:
@@ -184,7 +185,7 @@ class MissionCenter(Building):
         )
         return random.random() < success_chance
 
-    def respawn_missions(self):
+    def respawn_missions(self) -> None:
         mission_count = len(self.get_available_missions())
         if mission_count < NUM_MISSION and random.random() < 0.1:
             self._load_missions_from_csv(

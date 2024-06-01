@@ -50,15 +50,15 @@ class Universe:
     def players(self):
         return self._players
 
-    def add_player(self, player):
+    def add_player(self, player) -> None:
         self._players.append(player)
         player_manager.update_universe(player.name, self)
 
-    def remove_player(self, player):
+    def remove_player(self, player) -> None:
         self._players.remove(player)
         player_manager.update_universe(player.name, None)
 
-    def add_star_system(self):
+    def add_star_system(self) -> None:
         new_system = StarSystem(f"System {len(self.star_systems)}")
         self.star_systems.append(new_system)
 
@@ -107,7 +107,7 @@ class Universe:
         stargate_from = Stargate(neighbor, system, distance)
         neighbor.add_stargate(stargate_from)
 
-    def health_check(self):
+    def health_check(self) -> None:
         expand_threshold_small = 2 ** (len(self.star_systems) / 2)
         expand_threshold_large = 2 ** len(self.star_systems)
         if (
@@ -195,7 +195,7 @@ class Universe:
     def get_random_system_with_planet(self):
         return random.choice([sys for sys in self.star_systems if len(sys.planets) > 0])
 
-    def full_check_all_players(self):
+    def full_check_all_players(self) -> None:
         for player in self._players:
             player.total_investment = player.calculate_total_investment()
 

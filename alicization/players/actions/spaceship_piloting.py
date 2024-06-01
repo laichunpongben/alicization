@@ -11,13 +11,14 @@ from ...spaceships.corvette import Corvette
 from ...spaceships.frigate import Frigate
 from ...spaceships.destroyer import Destroyer
 from ...spaceships.courier import Courier
+from ...spaceships.spaceship import Spaceship
 
 logger = logging.getLogger(__name__)
 
 player_manager = PlayerManager()
 
 
-def pilot(player, new_spaceship_class: str):
+def pilot(player, new_spaceship_class: str) -> None:
     current_location = player_manager.get_location(player.name)
     old_spaceship = player_manager.get_spaceship(player.name)
     if can_pilot(player, current_location, new_spaceship_class):
@@ -56,7 +57,7 @@ def pilot(player, new_spaceship_class: str):
         )
 
 
-def unload(player):
+def unload(player) -> None:
     current_location = player_manager.get_location(player.name)
     spaceship = player_manager.get_spaceship(player.name)
     if can_unload(current_location, spaceship):
@@ -68,7 +69,7 @@ def unload(player):
         logger.warning("Cannot unload cargo from this location.")
 
 
-def load(player):
+def load(player) -> None:
     current_location = player_manager.get_location(player.name)
     spaceship = player_manager.get_spaceship(player.name)
     if can_load(player, current_location, spaceship):
@@ -84,7 +85,7 @@ def load(player):
         logger.warning("Cannot load cargo from this location.")
 
 
-def can_pilot(player, current_location, spaceship_class: str):
+def can_pilot(player, current_location, spaceship_class: str) -> bool:
     return (
         (
             current_location.has_hangar()
@@ -98,11 +99,11 @@ def can_pilot(player, current_location, spaceship_class: str):
     )
 
 
-def can_unload(current_location, spaceship):
+def can_unload(current_location, spaceship) -> bool:
     return current_location.has_storage() and not spaceship.is_cargo_empty()
 
 
-def can_load(player, current_location, spaceship):
+def can_load(player, current_location, spaceship) -> bool:
     return (
         current_location.has_storage()
         and bool(current_location.storage.get_inventory(player.name))
@@ -110,7 +111,7 @@ def can_load(player, current_location, spaceship):
     )
 
 
-def create_spaceship_instance(spaceship_class: str):
+def create_spaceship_instance(spaceship_class: str) -> Spaceship:
     cls_map = {
         "explorer": Explorer,
         "miner": Miner,

@@ -90,7 +90,7 @@ class Player:
         self.long_production_ema = EMAData(period=EARNING_MEMORY)
         self.short_production_ema = EMAData(period=int(EARNING_MEMORY * 0.5))
 
-    def born(self, universe):
+    def born(self, universe) -> None:
         universe.add_player(self)
         home_system = universe.get_random_system_with_planet()
         home_system.add_player(self)
@@ -99,21 +99,21 @@ class Player:
         pilot(self, "explorer")
         player_manager.add_player(self)
 
-    def spend(self, money: float):
+    def spend(self, money: float) -> None:
         self.wallet -= money
         universe = player_manager.get_universe(self.name)
         universe.total_spending += money
 
-    def unspend(self, money: float):
+    def unspend(self, money: float) -> None:
         self.spend(-money)
 
-    def earn(self, money: float):
+    def earn(self, money: float) -> None:
         self.wallet += money
         self.turn_earning += money
         universe = player_manager.get_universe(self.name)
         universe.total_earning += money
 
-    def die(self):
+    def die(self) -> None:
         current_system = player_manager.get_system(self.name)
         current_location = player_manager.get_location(self.name)
         home_system = player_manager.get_home_system(self.name)
@@ -130,7 +130,7 @@ class Player:
         self.turns_until_idle += NUM_RESPAWN_IDLE_TURN
         logger.warning(f"{self.name} respawned at {home_system.name}")
 
-    def act(self):
+    def act(self) -> None:
         if self.control in [
             Control.NEURAL_AI,
             Control.SYMBOLIC_AI,
@@ -158,11 +158,11 @@ class Player:
         else:
             return self.last_action_index
 
-    def health_check(self):
+    def health_check(self) -> None:
         spaceship = player_manager.get_spaceship(self.name)
         spaceship.health_check()
 
-    def update_stats(self):
+    def update_stats(self) -> None:
         universe = player_manager.get_universe(self.name)
         self.net_worth = calculate_net_worth(self, universe)
         self.roi = calculate_roi(self)

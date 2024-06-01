@@ -1,6 +1,7 @@
 # hangar.py
 
 import uuid
+from typing import List
 import logging
 
 from .building import Building
@@ -14,7 +15,7 @@ class Hangar(Building):
         self.name = f"Hangar {uuid.uuid4().hex}"
         self.spaceships = {}
 
-    def add_spaceship(self, player, spaceship):
+    def add_spaceship(self, player, spaceship) -> None:
         if player.name not in self.spaceships:
             self.spaceships[player.name] = []
         else:
@@ -35,7 +36,7 @@ class Hangar(Building):
                     return spaceship
         return None
 
-    def has_spaceship(self, player, spaceship_class: str):
+    def has_spaceship(self, player, spaceship_class: str) -> bool:
         if player.name not in self.spaceships:
             self.spaceships[player.name] = []
         else:
@@ -44,7 +45,7 @@ class Hangar(Building):
                     return True
         return False
 
-    def get_spaceships(self, player):
+    def get_spaceships(self, player) -> List:
         return self.spaceships.get(player.name, [])
 
     def reset(self):

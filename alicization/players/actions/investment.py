@@ -17,7 +17,7 @@ check_building_method_map = {
 }
 
 
-def invest(player, building_name: str, amount: float):
+def invest(player, building_name: str, amount: float) -> None:
     current_location = player_manager.get_location(player.name)
     if can_invest(player, current_location, building_name):
         if player.wallet >= amount:
@@ -32,13 +32,13 @@ def invest(player, building_name: str, amount: float):
         logger.warning("Cannot invest from this location.")
 
 
-def invest_random_amount(player, building_name: str):
+def invest_random_amount(player, building_name: str) -> None:
     spend_factor = 0.01
     amount = random.randint(0, max(int(player.wallet * spend_factor), 0))
     invest(player, building_name, amount)
 
 
-def collect(player):
+def collect(player) -> None:
     current_location = player_manager.get_location(player.name)
     if can_collect(player, current_location):
         payout = 0
@@ -51,7 +51,7 @@ def collect(player):
         logger.warning("Cannot collect from this location.")
 
 
-def can_invest(player, current_location, building_name: str):
+def can_invest(player, current_location, building_name: str) -> bool:
     method_name = check_building_method_map.get(building_name)
     if method_name is not None:
         method = getattr(current_location, method_name)
@@ -59,7 +59,7 @@ def can_invest(player, current_location, building_name: str):
     return False
 
 
-def can_collect(player, current_location):
+def can_collect(player, current_location) -> bool:
     checks = []
     for building_name in INVESTABLE_BUILDINGS:
         method_name = check_building_method_map.get(building_name)

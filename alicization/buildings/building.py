@@ -41,7 +41,7 @@ class Building(ABC):
     def self_repair_hull(self):
         return self._self_repair_hull
 
-    def repair(self):
+    def repair(self) -> None:
         self._hull = min(self._hull + self._self_repair_hull, self._max_hull)
         self._cooldown = max(self._cooldown - 1, 0)
 

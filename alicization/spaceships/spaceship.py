@@ -173,10 +173,10 @@ class Spaceship(ABC):
     def destroyed(self, value):
         self._destroyed = value
 
-    def is_damaged(self):
+    def is_damaged(self) -> bool:
         return self._armor < self._max_armor or self._hull < self._max_hull
 
-    def take_damage(self, damage):
+    def take_damage(self, damage) -> None:
         if damage >= self._shield:
             damage -= self._shield
             self._shield = 0
@@ -197,22 +197,22 @@ class Spaceship(ABC):
             self._shield -= damage
             damage = 0
 
-    def recharge_shield(self):
+    def recharge_shield(self) -> None:
         self._shield = min(self._shield + int(self._max_shield / 10), self._max_shield)
 
-    def recharge_shield_full(self):
+    def recharge_shield_full(self) -> None:
         self._shield = self._max_shield
 
-    def calc_repair_cost(self):
+    def calc_repair_cost(self) -> float:
         return (1 + self._level / 10) * self._base_repair_cost
 
-    def repair(self):
+    def repair(self) -> None:
         self._shield = self._max_shield
         self._armor = self._max_armor
         self._hull = self._max_hull
         logger.debug("Spaceship repair done!")
 
-    def calc_upgrade_cost(self):
+    def calc_upgrade_cost(self) -> float:
         return (1 + self._level / 2) * self._base_upgrade_cost
 
     def _calculate_cargo_size(self):
@@ -227,18 +227,18 @@ class Spaceship(ABC):
 
         return cargo_size
 
-    def update_cargo_size(self):
+    def update_cargo_size(self) -> None:
         self._cargo_size = self._calculate_cargo_size()
 
-    def is_cargo_full(self):
+    def is_cargo_full(self) -> bool:
         cargo_size = self._calculate_cargo_size()
         return cargo_size >= self._max_cargo_size
 
-    def is_cargo_empty(self):
+    def is_cargo_empty(self) -> bool:
         cargo_size = self._calculate_cargo_size()
         return cargo_size <= 0
 
-    def upgrade(self):
+    def upgrade(self) -> None:
         if self._level < self._max_level:
             self._weapon += self._weapon_upgrade
             self._max_shield += self._shield_upgrade
@@ -252,10 +252,10 @@ class Spaceship(ABC):
         else:
             logger.debug("Spaceship max upgrade reached!")
 
-    def empty_cargo_hold(self):
+    def empty_cargo_hold(self) -> None:
         self._cargo_hold = defaultdict(int)
 
-    def health_check(self):
+    def health_check(self) -> None:
         self.recharge_shield()
         self.update_cargo_size()
 

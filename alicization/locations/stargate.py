@@ -19,7 +19,7 @@ class Stargate(Location):
         self.destination = destination
         self.distance = distance
 
-    def activate(self, player, spaceship):
+    def activate(self, player, spaceship) -> None:
         # system change
         self.origin.remove_player(player)
         self.destination.add_player(player)

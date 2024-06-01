@@ -27,7 +27,7 @@ class PlanetaryDefense(Building):
         self.attack_round = 8
         self.hit_chance = 0.5
 
-    def attack(self):
+    def attack(self) -> float:
         if self.cooldown <= 0:
             functional_factor = (
                 max(self._hull / self._max_hull, 0.1) if self._max_hull > 0 else 1
@@ -41,7 +41,7 @@ class PlanetaryDefense(Building):
             damage = 0
         return damage
 
-    def bombard(self, player, spaceship):
+    def bombard(self, player, spaceship) -> None:
         damage = np.random.binomial(NUM_BOMBARD_ROUND, P_BOMBARD_HIT) * spaceship.weapon
         player.total_damage += damage
 

@@ -12,7 +12,7 @@ player_manager = PlayerManager()
 SET_HOME_COST = 1000
 
 
-def set_home(player):
+def set_home(player) -> None:
     current_system = player_manager.get_system(player.name)
     current_location = player_manager.get_location(player.name)
     if can_set_home(player, current_system, current_location):
@@ -23,7 +23,7 @@ def set_home(player):
         logger.warning("Cannot set home from this location.")
 
 
-def explore(player):
+def explore(player) -> None:
     current_location = player_manager.get_location(player.name)
     if can_explore(current_location):
         logger.info(
@@ -33,7 +33,7 @@ def explore(player):
         logger.warning(f"No resources found on {current_location.name}")
 
 
-def can_set_home(player, current_system, current_location):
+def can_set_home(player, current_system, current_location) -> bool:
     home_system = player_manager.get_home_system(player.name)
     return (
         isinstance(current_location, Planet)
@@ -42,5 +42,5 @@ def can_set_home(player, current_system, current_location):
     )
 
 
-def can_explore(current_location):
+def can_explore(current_location) -> bool:
     return isinstance(current_location, (Planet, Moon, AsteroidBelt))

@@ -24,7 +24,7 @@ class Debris(Location):
     def resources(self):
         return self._resources
 
-    def add(self, cargo: dict):
+    def add(self, cargo: dict) -> None:
         if cargo:
             for item, count in cargo.items():
                 if random.random() < P_DEBRIS_ADD:

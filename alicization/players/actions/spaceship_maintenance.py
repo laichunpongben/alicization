@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 player_manager = PlayerManager()
 
 
-def repair(player):
+def repair(player) -> None:
     current_location = player_manager.get_location(player.name)
     spaceship = player_manager.get_spaceship(player.name)
     if can_repair(player, current_location, spaceship):
@@ -19,7 +19,7 @@ def repair(player):
         logger.warning("Cannot repair spaceship from this location.")
 
 
-def upgrade(player):
+def upgrade(player) -> None:
     current_location = player_manager.get_location(player.name)
     spaceship = player_manager.get_spaceship(player.name)
     if can_upgrade(player, current_location, spaceship):
@@ -29,13 +29,13 @@ def upgrade(player):
         logger.warning("Cannot upgrade spaceship from this location.")
 
 
-def can_repair(player, current_location, spaceship):
+def can_repair(player, current_location, spaceship) -> bool:
     return current_location.has_drydock() and current_location.drydock.can_repair(
         player, spaceship
     )
 
 
-def can_upgrade(player, current_location, spaceship):
+def can_upgrade(player, current_location, spaceship) -> bool:
     return current_location.has_drydock() and current_location.drydock.can_upgrade(
         player, spaceship
     )

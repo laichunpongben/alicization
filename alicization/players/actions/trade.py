@@ -21,7 +21,7 @@ ASK_MARGIN = 0.5
 BID_MARGIN = 0.2
 
 
-def buy(player, item_type: str, quantity: int, price: float):
+def buy(player, item_type: str, quantity: int, price: float) -> None:
     current_location = player_manager.get_location(player.name)
     if can_buy(player, current_location, quantity, price):
         if current_location.marketplace.place_bid_order(
@@ -41,7 +41,9 @@ def buy(player, item_type: str, quantity: int, price: float):
         return False
 
 
-def sell(player, item_type: str, quantity: int, min_price: float, buyout_price: float):
+def sell(
+    player, item_type: str, quantity: int, min_price: float, buyout_price: float
+) -> None:
     current_location = player_manager.get_location(player.name)
     if can_sell(player, current_location, item_type, quantity):
         if current_location.marketplace.place_ask_order(
@@ -61,7 +63,7 @@ def sell(player, item_type: str, quantity: int, min_price: float, buyout_price: 
         return False
 
 
-def buy_material(player, item_type: str, margin: float):
+def buy_material(player, item_type: str, margin: float) -> None:
     current_location = player_manager.get_location(player.name)
     material = material_manager.get_material(item_type)
     if material:
@@ -92,7 +94,7 @@ def buy_material(player, item_type: str, margin: float):
         logger.warning(f"Cannot buy material {item_type} from this location.")
 
 
-def buy_random_material(player, margin: float):
+def buy_random_material(player, margin: float) -> None:
     sampled_max_rarity = random.choices(
         [1, 2, 3, 4, 5], weights=[80, 32, 12, 4, 1], k=1
     )[0]
@@ -101,12 +103,14 @@ def buy_random_material(player, margin: float):
     buy_material(player, item_type, margin)
 
 
-def buy_random_material_random_margin(player):
+def buy_random_material_random_margin(player) -> None:
     margin = random_bid_margin()
     buy_random_material(player, margin)
 
 
-def sell_material(player, item_type: str, lower_margin: float, upper_margin: float):
+def sell_material(
+    player, item_type: str, lower_margin: float, upper_margin: float
+) -> None:
     current_location = player_manager.get_location(player.name)
     if can_sell(player, current_location, item_type, 1):
         material = material_manager.get_material(item_type)
@@ -142,7 +146,7 @@ def sell_material(player, item_type: str, lower_margin: float, upper_margin: flo
         logger.warning("No available material for selling")
 
 
-def sell_random_material(player, lower_margin: float, upper_margin: float):
+def sell_random_material(player, lower_margin: float, upper_margin: float) -> None:
     current_location = player_manager.get_location(player.name)
     if current_location.has_storage():
         available_materials = [
@@ -155,13 +159,13 @@ def sell_random_material(player, lower_margin: float, upper_margin: float):
             sell_material(player, item_type, lower_margin, upper_margin)
 
 
-def sell_random_material_random_margin(player):
+def sell_random_material_random_margin(player) -> None:
     upper_margin = random_ask_margin()
     lower_margin = upper_margin - 1
     sell_random_material(player, lower_margin, upper_margin)
 
 
-def buy_spaceship(player, spaceship_class: str, margin: float):
+def buy_spaceship(player, spaceship_class: str, margin: float) -> None:
     current_location = player_manager.get_location(player.name)
     spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
     if spaceship_info:
@@ -184,21 +188,21 @@ def buy_spaceship(player, spaceship_class: str, margin: float):
         logger.warning(f"Cannot buy spaceship {spaceship_class} from this location.")
 
 
-def random_bid_margin():
+def random_bid_margin() -> float:
     price_index = economy.galactic_price_index
     min_ = min(0, price_index * (1 + BID_MARGIN) - 1)
     max_ = max(0, price_index * (1 + BID_MARGIN) - 1)
     return max(random.uniform(min_, max_), 0)
 
 
-def buy_spaceship_random_margin(player, spaceship_class: str):
+def buy_spaceship_random_margin(player, spaceship_class: str) -> None:
     margin = random_bid_margin()
     return buy_spaceship(player, spaceship_class, margin)
 
 
 def sell_spaceship(
     player, spaceship_class: str, lower_margin: float, upper_margin: float
-):
+) -> None:
     current_location = player_manager.get_location(player.name)
     if can_sell(player, current_location, spaceship_class, 1):
         spaceship_info = spaceship_manager.get_spaceship(spaceship_class)
@@ -230,20 +234,20 @@ def sell_spaceship(
         logger.warning("Cannot sell spaceship from this location.")
 
 
-def random_ask_margin():
+def random_ask_margin() -> float:
     price_index = economy.galactic_price_index
     min_ = min(price_index - 1, price_index * (1 + ASK_MARGIN) - 1)
     max_ = max(price_index - 1, price_index * (1 + ASK_MARGIN) - 1)
     return max(random.uniform(min_, max_), 0)
 
 
-def sell_spaceship_random_margin(player, spaceship_class: str):
+def sell_spaceship_random_margin(player, spaceship_class: str) -> bool:
     upper_margin = random_ask_margin()
     lower_margin = upper_margin - 1
     sell_spaceship(player, spaceship_class, lower_margin, upper_margin)
 
 
-def can_buy(player, current_location, quantity: int, price: float):
+def can_buy(player, current_location, quantity: int, price: float) -> bool:
     return (
         current_location.has_marketplace()
         and current_location.has_storage()
@@ -251,7 +255,7 @@ def can_buy(player, current_location, quantity: int, price: float):
     )
 
 
-def can_sell(player, current_location, item_type: str, quantity: int):
+def can_sell(player, current_location, item_type: str, quantity: int) -> bool:
     return (
         current_location.has_marketplace()
         and current_location.has_storage()
@@ -259,7 +263,7 @@ def can_sell(player, current_location, item_type: str, quantity: int):
     )
 
 
-def can_buy_spaceship(player, current_location):
+def can_buy_spaceship(player, current_location) -> bool:
     return (
         current_location.has_marketplace()
         and current_location.has_storage()
@@ -267,7 +271,7 @@ def can_buy_spaceship(player, current_location):
     )
 
 
-def can_buy_material(player, current_location):
+def can_buy_material(player, current_location) -> bool:
     return (
         current_location.has_marketplace()
         and current_location.has_storage()
@@ -275,7 +279,7 @@ def can_buy_material(player, current_location):
     )
 
 
-def can_sell_material(player, current_location):
+def can_sell_material(player, current_location) -> bool:
     return (
         current_location.has_marketplace()
         and current_location.has_storage()

@@ -121,7 +121,7 @@ class AsteroidBelt(Location, Mineable):
                 leaderboard.log_achievement(player.name, "death", 1)
                 player.die()
 
-    def respawn_resources(self):
+    def respawn_resources(self) -> None:
         if all(
             amount == 0 for amount in self._resources.values()
         ):  # All resources depleted

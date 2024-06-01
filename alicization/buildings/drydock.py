@@ -29,16 +29,16 @@ class Drydock(Building, Investable):
         Investable.__init__(self)
         self.name = f"Drydock {uuid.uuid4().hex}"
 
-    def can_repair(self, player, spaceship):
+    def can_repair(self, player, spaceship) -> bool:
         return spaceship.is_damaged() and player.wallet >= spaceship.calc_upgrade_cost()
 
-    def can_upgrade(self, player, spaceship):
+    def can_upgrade(self, player, spaceship) -> bool:
         return (
             spaceship.level < spaceship.max_level
             and player.wallet >= spaceship.calc_upgrade_cost()
         )
 
-    def repair_spaceship(self, player, spaceship):
+    def repair_spaceship(self, player, spaceship) -> bool:
         if self._cooldown > 0:
             return False
 
@@ -55,7 +55,7 @@ class Drydock(Building, Investable):
 
         return False
 
-    def upgrade_spaceship(self, player, spaceship):
+    def upgrade_spaceship(self, player, spaceship) -> bool:
         if self._cooldown > 0:
             return False
 

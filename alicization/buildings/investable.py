@@ -58,7 +58,7 @@ class Investable(ABC):
     def owner(self):
         return self._owner
 
-    def invest(self, player, amount: float):
+    def invest(self, player, amount: float) -> None:
         if self.cooldown > 0:
             return
 
@@ -77,7 +77,7 @@ class Investable(ABC):
 
         self._update_monopoly_status(player, before_monopoly, before_owner)
 
-    def profit(self, player):
+    def profit(self, player) -> float:
         if self.cooldown > 0:
             return 0
 

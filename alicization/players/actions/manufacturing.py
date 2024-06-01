@@ -73,7 +73,7 @@ blueprints = {
 }
 
 
-def manufacture(player, blueprint_name: str):
+def manufacture(player, blueprint_name: str) -> None:
     current_location = player_manager.get_location(player.name)
     if can_manufacture(player, current_location, blueprint_name):
         if current_location.factory.manufacture(player, blueprint_name):
@@ -84,7 +84,7 @@ def manufacture(player, blueprint_name: str):
         logger.warning(f"Cannot manufacture from this location")
 
 
-def can_manufacture(player, current_location, blueprint_name: str):
+def can_manufacture(player, current_location, blueprint_name: str) -> bool:
     blueprint = blueprints.get(blueprint_name)
     return (
         current_location.has_factory()

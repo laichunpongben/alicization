@@ -21,7 +21,7 @@ class LocationMap:
     def get_location(self, location_name: str):
         return self._map.get(location_name)
 
-    def add_location(self, location):
+    def add_location(self, location) -> None:
         if not location.name in self._map:
             self._map[location.name] = location
         else:

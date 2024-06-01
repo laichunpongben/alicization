@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 player_manager = PlayerManager()
 
 
-def mine(player):
+def mine(player) -> None:
     current_location = player_manager.get_location(player.name)
     spaceship = player_manager.get_spaceship(player.name)
     if can_mine(current_location, spaceship):
@@ -21,7 +21,7 @@ def mine(player):
         logger.warning("Cannot mine from this location.")
 
 
-def salvage(player):
+def salvage(player) -> None:
     current_location = player_manager.get_location(player.name)
     spaceship = player_manager.get_spaceship(player.name)
     if can_salvage(current_location, spaceship):
@@ -31,7 +31,7 @@ def salvage(player):
         logger.warning("Cannot upgrade spaceship from this location.")
 
 
-def can_mine(current_location, spaceship):
+def can_mine(current_location, spaceship) -> bool:
     return (
         isinstance(current_location, Mineable)
         and not spaceship.is_cargo_full()
@@ -40,7 +40,7 @@ def can_mine(current_location, spaceship):
     )
 
 
-def can_salvage(current_location, spaceship):
+def can_salvage(current_location, spaceship) -> bool:
     return (
         isinstance(current_location, Debris)
         and not current_location.is_empty()

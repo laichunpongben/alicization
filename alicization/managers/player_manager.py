@@ -46,7 +46,7 @@ class PlayerManager:
     def get_player(self, player_name: str):
         return self._players.get(player_name)
 
-    def add_player(self, player):
+    def add_player(self, player) -> None:
         if not player.name in self._players:
             self._players[player.name] = player
         else:
@@ -55,29 +55,29 @@ class PlayerManager:
     def get_universe(self, player_name: str):
         return self._universes.get(player_name)
 
-    def update_universe(self, player_name: str, new_universe):
+    def update_universe(self, player_name: str, new_universe) -> None:
         self._universes[player_name] = new_universe
 
     def get_home_system(self, player_name: str):
         return self._home_systems.get(player_name)
 
-    def update_home_system(self, player_name: str, new_system):
+    def update_home_system(self, player_name: str, new_system) -> None:
         self._home_systems[player_name] = new_system
 
     def get_system(self, player_name: str):
         return self._systems.get(player_name)
 
-    def update_system(self, player_name: str, new_system):
+    def update_system(self, player_name: str, new_system) -> None:
         self._systems[player_name] = new_system
 
     def get_location(self, player_name: str):
         return self._locations.get(player_name)
 
-    def update_location(self, player_name: str, new_location):
+    def update_location(self, player_name: str, new_location) -> None:
         self._locations[player_name] = new_location
 
     def get_spaceship(self, player_name: str):
         return self._spaceships.get(player_name)
 
-    def update_spaceship(self, player_name: str, new_spaceship):
+    def update_spaceship(self, player_name: str, new_spaceship) -> None:
         self._spaceships[player_name] = new_spaceship

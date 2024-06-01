@@ -4,6 +4,7 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 import random
+from typing import List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -41,20 +42,20 @@ class MaterialManager:
                 )
         return materials
 
-    def get_all_meterials(self):
+    def get_all_meterials(self) -> List:
         return list(self._materials.values())
 
     def get_material(self, name: str):
         return self._materials.get(name)
 
-    def get_rarity(self, name: str):
+    def get_rarity(self, name: str) -> int:
         material = self.get_material(name)
         if material:
             return material.rarity
         else:
             return 1
 
-    def guess_base_price(self, rarity: int):
+    def guess_base_price(self, rarity: int) -> float:
         return 2 ** (max(rarity - 1, 0))
 
     def random_material(self, max_rarity: int = 5):

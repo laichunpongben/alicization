@@ -38,7 +38,7 @@ leaderboard = Leaderboard()
 MIN_UNIT_PRICE = 0.0001
 
 
-def get_current_spaceship_type(spaceship):
+def get_current_spaceship_type(spaceship) -> int:
     if isinstance(spaceship, Explorer):
         return 1
     elif isinstance(spaceship, Miner):
@@ -57,7 +57,7 @@ def get_current_spaceship_type(spaceship):
         return 0
 
 
-def get_current_location_type(current_location):
+def get_current_location_type(current_location) -> int:
     if isinstance(current_location, EmptySpace):
         return 1
     elif isinstance(current_location, Planet):
@@ -74,7 +74,7 @@ def get_current_location_type(current_location):
         return 0
 
 
-def calculate_distance_from_home(player, current_system, home_system):
+def calculate_distance_from_home(player, current_system, home_system) -> int:
     universe = player_manager.get_universe(player.name)
     star_systems = universe.star_systems
     distance = calculate_minimum_distance(star_systems, current_system, home_system)
@@ -82,7 +82,7 @@ def calculate_distance_from_home(player, current_system, home_system):
     return distance
 
 
-def calculate_net_worth(player, universe):
+def calculate_net_worth(player, universe) -> float:
     inventory_worth = calculate_inventory_worth(player, universe)
     spaceship_worth = calculate_spaceship_worth(player, universe)
     marketplace_reserve = calculate_marketplace_reserve(player, universe)
@@ -96,7 +96,7 @@ def calculate_net_worth(player, universe):
     return net_worth
 
 
-def calculate_inventory_worth(player, universe):
+def calculate_inventory_worth(player, universe) -> float:
     inventory_worth = 0
     base_price_cache = {}
     for system in universe.star_systems:
@@ -124,7 +124,7 @@ def calculate_inventory_worth(player, universe):
     return inventory_worth
 
 
-def calculate_spaceship_worth(player, universe):
+def calculate_spaceship_worth(player, universe) -> float:
     spaceship_worth = 0
     base_price_cache = {}
     for system in universe.star_systems:
@@ -146,7 +146,7 @@ def calculate_spaceship_worth(player, universe):
     return spaceship_worth
 
 
-def calculate_marketplace_reserve(player, universe):
+def calculate_marketplace_reserve(player, universe) -> float:
     reserve = 0
     for system in universe.star_systems:
         for planet in system.planets:
@@ -194,14 +194,14 @@ def get_mission_info(current_location):
         return 0, 0
 
 
-def calculate_roi(player):
+def calculate_roi(player) -> float:
     if player.total_investment > 0:
         return player.profit_collected / player.total_investment
     else:
         return 0
 
 
-def calculate_total_investment(player, universe):
+def calculate_total_investment(player, universe) -> float:
     investment = 0
     for system in universe.star_systems:
         for planet in system.planets:
@@ -210,7 +210,7 @@ def calculate_total_investment(player, universe):
     return investment
 
 
-def calculate_score(player):
+def calculate_score(player) -> float:
     monopoly_score = leaderboard.get_achievement_score(player.name, "monopoly")
     mission_score = leaderboard.get_achievement_score(player.name, "mission")
     kill_score = leaderboard.get_achievement_score(player.name, "kill")
@@ -233,7 +233,7 @@ class EMAData:
 
 def calculate_ema_ratio(
     history: deque, turn_gain: float, short_ema_data: EMAData, long_ema_data: EMAData
-):
+) -> float:
     if len(history) >= short_ema_data.period:
         short_ema_data.ema = update_ema(short_ema_data.ema, turn_gain, short_ema_data.k)
 
@@ -243,11 +243,11 @@ def calculate_ema_ratio(
     return compute_ema_ratio(short_ema_data.ema, long_ema_data.ema, history)
 
 
-def update_ema(current_ema: float, new_value: float, k: int):
+def update_ema(current_ema: float, new_value: float, k: int) -> float:
     return new_value if current_ema is None else new_value * k + current_ema * (1 - k)
 
 
-def compute_ema_ratio(short_ema: float, long_ema: float, history: deque):
+def compute_ema_ratio(short_ema: float, long_ema: float, history: deque) -> float:
     if len(history) == history.maxlen and long_ema and short_ema and long_ema > 0:
         return min(max(short_ema / long_ema, 0.0001), 10000)
     return 1

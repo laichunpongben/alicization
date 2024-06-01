@@ -19,7 +19,7 @@ P_SALVAGE = 0.95
 MIN_BOUNTY = 100
 
 
-def attack(player, target_player):
+def attack(player, target_player) -> None:
     current_system = player_manager.get_system(player.name)
     current_location = player_manager.get_location(player.name)
     spaceship = player_manager.get_spaceship(player.name)
@@ -124,7 +124,7 @@ def attack(player, target_player):
         )
 
 
-def find_target_player(player, current_location, order_by: int):
+def _find_target_player(player, current_location, order_by: int) -> None:
     available_target_players = [p for p in current_location.players if p != player]
     if len(available_target_players) > 0:
         if order_by > 0:
@@ -140,7 +140,7 @@ def find_target_player(player, current_location, order_by: int):
         return None
 
 
-def attack_player(player, difficulty: str):
+def attack_player(player, difficulty: str) -> None:
     current_location = player_manager.get_location(player.name)
     if difficulty == "weak":
         order_by = 1
@@ -148,14 +148,14 @@ def attack_player(player, difficulty: str):
         order_by = -1
     else:
         order_by = 0
-    target_player = find_target_player(player, current_location, order_by)
+    target_player = _find_target_player(player, current_location, order_by)
     if target_player is not None:
         attack(player, target_player)
     else:
         logger.warning("No valid target to attack!")
 
 
-def bombard(player, target_building):
+def bombard(player, target_building) -> None:
     current_location = player_manager.get_location(player.name)
     spaceship = player_manager.get_spaceship(player.name)
     if can_bombard(current_location, spaceship):
@@ -164,7 +164,7 @@ def bombard(player, target_building):
         logger.warning("Cannot bombard from this location.")
 
 
-def bombard_random_building(player):
+def bombard_random_building(player) -> None:
     current_location = player_manager.get_location(player.name)
     available_target_buildings = [building for building in current_location.buildings]
     if len(available_target_buildings) > 0:
@@ -174,7 +174,7 @@ def bombard_random_building(player):
         logger.warning("No building to bombard from this location.")
 
 
-def place_bounty(player):
+def place_bounty(player) -> None:
     if can_place_bounty(player):
         spend_factor = 0.01
         upper_bound = max(MIN_BOUNTY, int(player.wallet * spend_factor))
@@ -190,11 +190,11 @@ def place_bounty(player):
         logger.warning("Cannot place bounty.")
 
 
-def can_attack(current_location, spaceship):
+def can_attack(current_location, spaceship) -> bool:
     return len(current_location.players) > 1 and spaceship.weapon > 0
 
 
-def can_bombard(current_location, spaceship):
+def can_bombard(current_location, spaceship) -> bool:
     return (
         len(current_location.buildings) > 1
         and any(building.cooldown <= 0 for building in current_location.buildings)
@@ -202,5 +202,5 @@ def can_bombard(current_location, spaceship):
     )
 
 
-def can_place_bounty(player):
+def can_place_bounty(player) -> bool:
     return player.wallet >= MIN_BOUNTY and player.last_killed_by is not None

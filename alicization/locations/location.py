@@ -42,52 +42,52 @@ class Location(ABC):
     def buildings(self):
         return self._buildings
 
-    def add_player(self, player):
+    def add_player(self, player) -> None:
         self.players.append(player)
         player_manager.update_location(player.name, self)
         logger.debug(f"Player {player} added to {self.name}.")
 
-    def remove_player(self, player):
+    def remove_player(self, player) -> None:
         self.players.remove(player)
         player_manager.update_location(player.name, None)
         logger.debug(f"Player {player} removed from {self.name}.")
 
-    def has_hangar(self):
+    def has_hangar(self) -> bool:
         return (
             hasattr(self, "hangar")
             and isinstance(self.hangar, Hangar)
             and self.hangar.cooldown <= 0
         )
 
-    def has_drydock(self):
+    def has_drydock(self) -> bool:
         return (
             hasattr(self, "drydock")
             and isinstance(self.drydock, Drydock)
             and self.drydock.cooldown <= 0
         )
 
-    def has_storage(self):
+    def has_storage(self) -> bool:
         return (
             hasattr(self, "storage")
             and isinstance(self.storage, Storage)
             and self.storage.cooldown <= 0
         )
 
-    def has_marketplace(self):
+    def has_marketplace(self) -> bool:
         return (
             hasattr(self, "marketplace")
             and isinstance(self.marketplace, Marketplace)
             and self.marketplace.cooldown <= 0
         )
 
-    def has_mission_center(self):
+    def has_mission_center(self) -> bool:
         return (
             hasattr(self, "mission_center")
             and isinstance(self.mission_center, MissionCenter)
             and self.mission_center.cooldown <= 0
         )
 
-    def has_factory(self):
+    def has_factory(self) -> bool:
         return (
             hasattr(self, "factory")
             and isinstance(self.factory, Factory)

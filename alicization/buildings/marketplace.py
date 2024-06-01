@@ -94,7 +94,9 @@ class Marketplace(Building, Investable):
         self.ask_orders = defaultdict(list)
         self.bid_orders = defaultdict(list)
 
-    def place_bid_order(self, player, item_type: str, quantity: int, price: float):
+    def place_bid_order(
+        self, player, item_type: str, quantity: int, price: float
+    ) -> bool:
         current_system = player_manager.get_system(player.name)
         current_location = player_manager.get_location(player.name)
         expiry = time_keeper.turn + NUM_TURN_BID_ORDER_EXPIRY
@@ -126,7 +128,7 @@ class Marketplace(Building, Investable):
         quantity: int,
         min_price: float,
         buyout_price: float,
-    ):
+    ) -> bool:
         current_system = player_manager.get_system(player.name)
         current_location = player_manager.get_location(player.name)
         expiry = time_keeper.turn + NUM_TURN_ASK_ORDER_EXPIRY
@@ -149,7 +151,7 @@ class Marketplace(Building, Investable):
             return True
         return False
 
-    def match_orders(self):
+    def match_orders(self) -> None:
         for item_type, bid_orders in self.bid_orders.items():
             ask_orders = self.ask_orders[item_type]
             matched_bids = []
