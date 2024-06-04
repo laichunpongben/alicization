@@ -172,8 +172,8 @@ class Player:
         self.affordability = calculate_ema_ratio(
             self.earning_history,
             self.turn_earning,
-            self.short_production_ema,
-            self.long_production_ema,
+            self.short_earning_ema,
+            self.long_earning_ema,
         )
         self.turn_earning = 0
 
